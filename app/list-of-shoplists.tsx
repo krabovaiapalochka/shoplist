@@ -16,8 +16,13 @@ import { useShopLists } from './ShopListContext';
 
 const App = () => {
   const router = useRouter();
-  const { shopLists } = useShopLists();
+  const { shopLists, addShopList } = useShopLists();
   const [searchText, setSearchText] = useState('');
+
+  const handleAddList = () => {
+    const newListId = addShopList(`Список ${shopLists.length + 1}`);
+    router.push({ pathname: '/shoplist-inside', params: { id: newListId } });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -52,28 +57,53 @@ const App = () => {
           
           <Text style={styles.sectionTitle}>Списки покупок</Text>
 
-          {shopLists.map((shopList, index) => (
-            <TouchableOpacity 
-              key={shopList.id}
-              style={styles.listCard} 
-              onPress={() => router.push({ pathname: '/shoplist-inside', params: { id: shopList.id } })}
-            >
-              <Text style={styles.listTitle}>{shopList.title === "Заголовок" ? `Список ${index + 1}` : shopList.title}</Text>
-              
-              <View style={styles.itemsContainer}>
-                {shopList.items.slice(0, 3).map((item) => (
-                  <Text style={styles.itemText} key={item.id}>
-                    {item.name}
-                  </Text>
-                ))}
-              </View>
-            </TouchableOpacity>
-          ))}
+          <View style={styles.masonryContainer}>
+            <View style={styles.masonryColumn}>
+              {shopLists.filter((_, i) => i % 2 === 0).map((shopList, idx) => {
+                const heightVariant = idx % 3 === 0 ? 'tall' : idx % 3 === 1 ? 'medium' : 'short';
+                const displayItems = heightVariant === 'tall' ? 5 : heightVariant === 'medium' ? 3 : 2;
+                return (
+                  <TouchableOpacity 
+                    key={shopList.id}
+                    style={[styles.listCard, heightVariant === 'tall' ? styles.cardTall : heightVariant === 'medium' ? styles.cardMedium : styles.cardShort]}
+                    onPress={() => router.push({ pathname: '/shoplist-inside', params: { id: shopList.id } })}
+                  >
+                    <Text style={styles.listTitle}>{shopList.title === "Заголовок" ? `Список ${idx + 1}` : shopList.title}</Text>
+                    <View style={styles.itemsContainer}>
+                      {shopList.items.slice(0, displayItems).map((item) => (
+                        <Text style={styles.itemText} key={item.id}>{item.name}</Text>
+                      ))}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            <View style={styles.masonryColumn}>
+              {shopLists.filter((_, i) => i % 2 === 1).map((shopList, idx) => {
+                const heightVariant = idx % 3 === 0 ? 'medium' : idx % 3 === 1 ? 'short' : 'tall';
+                const displayItems = heightVariant === 'tall' ? 5 : heightVariant === 'medium' ? 3 : 2;
+                return (
+                  <TouchableOpacity 
+                    key={shopList.id}
+                    style={[styles.listCard, heightVariant === 'tall' ? styles.cardTall : heightVariant === 'medium' ? styles.cardMedium : styles.cardShort]}
+                    onPress={() => router.push({ pathname: '/shoplist-inside', params: { id: shopList.id } })}
+                  >
+                    <Text style={styles.listTitle}>{shopList.title === "Заголовок" ? `Список ${idx + 1}` : shopList.title}</Text>
+                    <View style={styles.itemsContainer}>
+                      {shopList.items.slice(0, displayItems).map((item) => (
+                        <Text style={styles.itemText} key={item.id}>{item.name}</Text>
+                      ))}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
           
           <View style={{ height: 100 }} />
         </ScrollView>
 
-        <TouchableOpacity style={styles.fab}>
+        <TouchableOpacity style={styles.fab} onPress={handleAddList}>
           <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>
       </ImageBackground>
@@ -148,19 +178,34 @@ const styles = StyleSheet.create({
     color: '#fff',
     padding: 0,
   },
-  sectionTitle: {
+sectionTitle: {
     fontSize: 20,
     color: '#5a7a3a',
     marginBottom: 15,
     fontWeight: '500',
   },
+  masonryContainer: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  masonryColumn: {
+    flex: 1,
+    gap: 10,
+  },
   listCard: {
     backgroundColor: '#E3E8C2',
     borderRadius: 15,
     padding: 15,
-    width: 180,
-    height: 160,
-    marginBottom: 10,
+    width: '100%',
+  },
+  cardShort: {
+    minHeight: 100,
+  },
+  cardMedium: {
+    minHeight: 150,
+  },
+  cardTall: {
+    minHeight: 200,
   },
   listTitle: {
     fontSize: 17,
@@ -196,8 +241,8 @@ const styles = StyleSheet.create({
     fontSize: 70,
     color: '#fff',
     fontWeight: '200',
-    marginTop: -9,
+    marginTop: -10,
   },
 });
 
-export default App;
+export default App

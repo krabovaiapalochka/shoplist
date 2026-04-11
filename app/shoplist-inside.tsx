@@ -16,13 +16,21 @@ const DATABASE = [
 export default function Index() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getShopList, updateShopListTitle, addItemToList, removeItemFromList, toggleItemPurchased } = useShopLists();
+  const { getShopList, updateShopListTitle, addItemToList, removeItemFromList, toggleItemPurchased, deleteShopList } = useShopLists();
   
   const shopList = id ? getShopList(id) : undefined;
   
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showMenu, setShowMenu] = useState(false);
+
+  const handleDeleteList = () => {
+    if (id) {
+      deleteShopList(id);
+      router.push("/list-of-shoplists");
+    }
+  };
 
   const searchHeaderIconColor = "#becc73";
   const searchHeaderTextColor = "#becc73";
@@ -121,9 +129,29 @@ export default function Index() {
           <TouchableOpacity style={styles.headerIcon}>
             <Ionicons name="share-outline" size={24} color="#becc73" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.headerIcon}>
+          <TouchableOpacity style={styles.headerIcon} onPress={() => setShowMenu(true)} activeOpacity={1}>
             <Ionicons name="ellipsis-horizontal" size={24} color="#becc73" />
           </TouchableOpacity>
+
+          {showMenu && (
+            <View style={styles.menuOverlay}>
+              <TouchableOpacity 
+                style={styles.menuBackdrop} 
+                onPress={() => setShowMenu(false)} 
+                  activeOpacity={1}
+               />
+            <View style={styles.menuContainer} pointerEvents="box-none">
+                  <TouchableOpacity 
+                    style={styles.menuItem} 
+                    onPress={handleDeleteList} 
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="trash-outline" size={16} color="#d66767" />
+                    <Text style={styles.menuItemText}>Удалить</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
         </View>
       </View>
 
@@ -174,7 +202,7 @@ export default function Index() {
         style={styles.fab}
         onPress={() => setIsSearching(true)}
       >
-        <Ionicons name="add" size={32} color="#fff" />
+        <Ionicons name="add" size={58} color="#fff" />
       </TouchableOpacity>
     </View>
   );
@@ -201,6 +229,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 5,
+    backgroundColor: "transparent",
   },
   headerRight: {
     flexDirection: "row",
@@ -209,6 +238,7 @@ const styles = StyleSheet.create({
   headerIcon: {
     padding: 8,
     marginLeft: 8,
+    backgroundColor: "transparent",
   },
   headerTitle: {
     fontSize: 24,
@@ -329,5 +359,48 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#2c4829",
+  },
+  menuOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  menuBackdrop: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "transparent",
+  },
+  menuContainer: {
+    position: "absolute",
+    top: 60,
+    right: 3,
+    width: 140,
+    backgroundColor: "#fff",
+    borderRadius: 15,
+    padding: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+    elevation: 5,
+    pointerEvents: "box-none",
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    backgroundColor: "transparent",
+  },
+  menuItemText: {
+    fontSize: 14,
+    color: "#d66767",
+    marginLeft: 6,
+    flex: 1,
+    textAlign: "left",
   },
 });

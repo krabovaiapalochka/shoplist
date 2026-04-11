@@ -19,6 +19,7 @@ interface ShopListContextType {
   addItemToList: (listId: string, itemName: string) => void;
   removeItemFromList: (listId: string, itemId: string) => void;
   toggleItemPurchased: (listId: string, itemId: string) => void;
+  deleteShopList: (id: string) => void;
   getShopList: (id: string) => ShopList | undefined;
 }
 
@@ -77,6 +78,10 @@ export const ShopListProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const getShopList = (id: string) => shopLists.find(list => list.id === id);
 
+  const deleteShopList = (id: string) => {
+    setShopLists(shopLists.filter(list => list.id !== id));
+  };
+
   return (
     <ShopListContext.Provider value={{
       shopLists,
@@ -85,6 +90,7 @@ export const ShopListProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       addItemToList,
       removeItemFromList,
       toggleItemPurchased,
+      deleteShopList,
       getShopList,
     }}>
       {children}

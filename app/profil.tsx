@@ -20,7 +20,7 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f0f4e8" />
+      <StatusBar barStyle="dark-content" backgroundColor="#d8e0cc" />
       
       <ImageBackground
         source={require("../assets/images/fon-background.png")}
@@ -50,7 +50,7 @@ export default function ProfileScreen() {
             <TextInput
               style={styles.inputField}
               placeholder="Номер тел."
-              placeholderTextColor="rgba(90, 122, 58, 0.5)"
+              placeholderTextColor="#4a6530"
               value={phone}
               onChangeText={setPhone}
               keyboardType="phone-pad"
@@ -59,7 +59,7 @@ export default function ProfileScreen() {
             <TextInput
               style={styles.inputField}
               placeholder="Эл.почта"
-              placeholderTextColor="rgba(90, 122, 58, 0.5)"
+              placeholderTextColor="#4a6530"
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -69,7 +69,7 @@ export default function ProfileScreen() {
             <TextInput
               style={styles.inputField}
               placeholder="Дата рожд."
-              placeholderTextColor="rgba(90, 122, 58, 0.5)"
+              placeholderTextColor="#4a6530"
               value={birthday}
               onChangeText={setBirthday}
             />
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: "40%",       
-    backgroundColor: "#becc73", 
+    backgroundColor: "#8faa4f", 
     zIndex: 1,            
   },
   backButton: {
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   card: {
-    backgroundColor: "#E3E8C2",
+    backgroundColor: "#c5d3a8",
     width: "90%",
     height: "51%",
     alignSelf: "center",
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
   },
   exitText: {
-    color: "#d66767",
+    color: "#b84545",
     fontSize: 16,
     fontWeight: "600",
   },
