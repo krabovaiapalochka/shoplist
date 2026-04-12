@@ -102,7 +102,7 @@ const App = () => {
                       </Text>
                       <View style={styles.itemsContainer}>
                         {shopList.items
-                          .slice(0, shopList.minHeight / 20)
+                          .slice(0, shopList.minHeight / 40 + 2)
                           .map((item) => (
                             <Text style={styles.itemText} key={item.id}>
                               {item.name}
@@ -138,7 +138,7 @@ const App = () => {
                       </Text>
                       <View style={styles.itemsContainer}>
                         {shopList.items
-                          .slice(0, shopList.minHeight / 20)
+                          .slice(0, shopList.minHeight / 40 + 2)
                           .map((item) => (
                             <Text style={styles.itemText} key={item.id}>
                               {item.name}

@@ -1,25 +1,67 @@
-import { useState } from "react";
-import { Text, View, TextInput, TouchableOpacity, FlatList, StyleSheet } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
+import {
+  FlatList,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useShopLists } from "./ShopListContext";
 
 const DATABASE = [
-  "Апельсин", "Бананы", "Батон", "Булочки", "Гречка", "Йогурт", "Картофель", "Кефир",
-  "Колбаса варёная", "Кофе", "Куриное филе", "Лук репчатый", "Макароны","Мандарин",
-  "Масло сливочное", "Морковь", "Мука", "Молоко", "Пельмени", "Подсолнечное масло",
-  "Рис", "Сахар", "Сметана", "Соль", "Сосиски", "Сыр твёрдый", "Творог",
-  "Фарш мясной", "Хлеб белый", "Хлеб тостовый", "Хлеб чёрный", "Чай чёрный",
-  "Яблоки", "Яйца",
+  "Апельсин",
+  "Бананы",
+  "Батон",
+  "Булочки",
+  "Гречка",
+  "Йогурт",
+  "Картофель",
+  "Кефир",
+  "Колбаса варёная",
+  "Кофе",
+  "Куриное филе",
+  "Лук репчатый",
+  "Макароны",
+  "Мандарин",
+  "Масло сливочное",
+  "Морковь",
+  "Мука",
+  "Молоко",
+  "Пельмени",
+  "Подсолнечное масло",
+  "Рис",
+  "Сахар",
+  "Сметана",
+  "Соль",
+  "Сосиски",
+  "Сыр твёрдый",
+  "Творог",
+  "Фарш мясной",
+  "Хлеб белый",
+  "Хлеб тостовый",
+  "Хлеб чёрный",
+  "Чай чёрный",
+  "Яблоки",
+  "Яйца",
 ];
 
 export default function Index() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getShopList, updateShopListTitle, addItemToList, removeItemFromList, toggleItemPurchased, deleteShopList } = useShopLists();
-  
+  const {
+    getShopList,
+    updateShopListTitle,
+    addItemToList,
+    removeItemFromList,
+    toggleItemPurchased,
+    deleteShopList,
+  } = useShopLists();
+
   const shopList = id ? getShopList(id) : undefined;
-  
+
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,12 +77,12 @@ export default function Index() {
   const searchHeaderIconColor = "#becc73";
   const searchHeaderTextColor = "#becc73";
 
-  const title = shopList?.title || "Заголовок";
+  const title = shopList?.title || "";
   const searchTitle = title === "Заголовок" ? "Список 1" : title;
   const items = shopList?.items || [];
 
-  const filteredProducts = DATABASE.filter(item => 
-    item.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredProducts = DATABASE.filter((item) =>
+    item.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const handleTitleChange = (newTitle: string) => {
@@ -73,13 +115,28 @@ export default function Index() {
     return (
       <View style={styles.container}>
         <View style={styles.searchHeader}>
-          <TouchableOpacity 
-            onPress={() => { setIsSearching(false); setSearchQuery(""); }} 
+          <TouchableOpacity
+            onPress={() => {
+              setIsSearching(false);
+              setSearchQuery("");
+            }}
             style={styles.backButton}
           >
-            <Ionicons name="arrow-back" size={24} color={searchHeaderIconColor} />
+            <Ionicons
+              name="arrow-back"
+              size={24}
+              color={searchHeaderIconColor}
+            />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, styles.searchTitle, { color: searchHeaderTextColor }]}>{searchTitle}</Text>
+          <Text
+            style={[
+              styles.headerTitle,
+              styles.searchTitle,
+              { color: searchHeaderTextColor },
+            ]}
+          >
+            {searchTitle}
+          </Text>
         </View>
 
         <View style={styles.searchContainer}>
@@ -88,7 +145,7 @@ export default function Index() {
             <TextInput
               style={styles.searchInput}
               placeholder="Поиск"
-              placeholderTextColor="#323e2f"//цвет поменять
+              placeholderTextColor="#323e2f" //цвет поменять
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoFocus
@@ -104,8 +161,8 @@ export default function Index() {
             data={filteredProducts}
             keyExtractor={(item, index) => index.toString()}
             renderItem={({ item }) => (
-              <TouchableOpacity 
-                style={styles.searchResultItem} 
+              <TouchableOpacity
+                style={styles.searchResultItem}
                 onPress={() => handleAddItem(item)}
               >
                 <Text style={styles.searchResultText}>{item}</Text>
@@ -121,37 +178,44 @@ export default function Index() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push("/list-of-shoplists")} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => router.push("/list-of-shoplists")}
+          style={styles.backButton}
+        >
           <Ionicons name="arrow-back" size={24} color="#becc73" />
         </TouchableOpacity>
-        
+
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.headerIcon}>
             <Ionicons name="share-outline" size={24} color="#becc73" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.headerIcon} onPress={() => setShowMenu(true)} activeOpacity={1}>
+          <TouchableOpacity
+            style={styles.headerIcon}
+            onPress={() => setShowMenu(true)}
+            activeOpacity={1}
+          >
             <Ionicons name="ellipsis-horizontal" size={24} color="#becc73" />
           </TouchableOpacity>
 
           {showMenu && (
             <View style={styles.menuOverlay}>
-              <TouchableOpacity 
-                style={styles.menuBackdrop} 
-                onPress={() => setShowMenu(false)} 
-                  activeOpacity={1}
-               />
-            <View style={styles.menuContainer} pointerEvents="box-none">
-                  <TouchableOpacity 
-                    style={styles.menuItem} 
-                    onPress={handleDeleteList} 
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="trash-outline" size={16} color="#d66767" />
-                    <Text style={styles.menuItemText}>Удалить</Text>
-                  </TouchableOpacity>
-                </View>
+              <TouchableOpacity
+                style={styles.menuBackdrop}
+                onPress={() => setShowMenu(false)}
+                activeOpacity={1}
+              />
+              <View style={styles.menuContainer} pointerEvents="box-none">
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleDeleteList}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="trash-outline" size={16} color="#d66767" />
+                  <Text style={styles.menuItemText}>Удалить</Text>
+                </TouchableOpacity>
               </View>
-            )}
+            </View>
+          )}
         </View>
       </View>
 
@@ -176,17 +240,27 @@ export default function Index() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.itemContainer}>
-            <TouchableOpacity 
-              style={[styles.checkCircle, item.purchased && styles.checkCircleChecked]}
+            <TouchableOpacity
+              style={[
+                styles.checkCircle,
+                item.purchased && styles.checkCircleChecked,
+              ]}
               onPress={() => handleTogglePurchased(item.id)}
             >
-              {item.purchased && <Ionicons name="checkmark" size={16} color="#fff" />}
+              {item.purchased && (
+                <Ionicons name="checkmark" size={16} color="#fff" />
+              )}
             </TouchableOpacity>
-            
-            <Text style={[styles.itemText, item.purchased && styles.itemTextPurchased]}>
+
+            <Text
+              style={[
+                styles.itemText,
+                item.purchased && styles.itemTextPurchased,
+              ]}
+            >
               {item.name}
             </Text>
-            
+
             <TouchableOpacity onPress={() => handleRemoveItem(item.id)}>
               <Ionicons name="trash-outline" size={22} color="#666" />
             </TouchableOpacity>
@@ -198,10 +272,7 @@ export default function Index() {
         contentContainerStyle={styles.listContent}
       />
 
-      <TouchableOpacity 
-        style={styles.fab}
-        onPress={() => setIsSearching(true)}
-      >
+      <TouchableOpacity style={styles.fab} onPress={() => setIsSearching(true)}>
         <Ionicons name="add" size={58} color="#fff" />
       </TouchableOpacity>
     </View>
@@ -319,13 +390,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 3,
   },
-   searchContainer: {
+  searchContainer: {
     backgroundColor: "#f4f4e6",
     marginHorizontal: 30,
     marginTop: 20,
     borderRadius: 20,
     padding: 20,
-    height: '60%',
+    height: "60%",
   },
   searchBar: {
     flexDirection: "row",
