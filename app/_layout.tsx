@@ -11,6 +11,7 @@ export default function RootLayout() {
         <Stack.Screen name="new-pass" />
         <Stack.Screen name="list-of-shoplists" />
         <Stack.Screen name="shoplist-inside" />
+        <Stack.Screen name="profil" />
       </Stack>
     </ShopListProvider>
   );
