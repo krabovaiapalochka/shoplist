@@ -24,11 +24,13 @@ const App = () => {
   const [searchText, setSearchText] = useState("");
 
   const handleAddList = () => {
-    const newListId = addShopList(`Список ${shopLists.length + 1}`);
+    const minHeight = getRandomCardHeightStyle().minHeight;
+    const newListId = addShopList(`Список ${shopLists.length + 1}`, minHeight);
     router.push({ pathname: "/shoplist-inside", params: { id: newListId } });
   };
   const handleAddListDebug = () => {
-    const newListId = addShopList(`Список ${shopLists.length + 1}`);
+    const minHeight = getRandomCardHeightStyle().minHeight;
+    const newListId = addShopList(`Список ${shopLists.length + 1}`, minHeight);
   };
 
   return (
@@ -79,11 +81,13 @@ const App = () => {
               {shopLists
                 .filter((_, i) => i % 2 === 0)
                 .map((shopList, idx) => {
-                  const height_style = getRandomCardHeightStyle();
                   return (
                     <TouchableOpacity
                       key={shopList.id}
-                      style={[styles.listCard, height_style]}
+                      style={[
+                        styles.listCard,
+                        { minHeight: shopList.minHeight },
+                      ]}
                       onPress={() =>
                         router.push({
                           pathname: "/shoplist-inside",
@@ -98,7 +102,7 @@ const App = () => {
                       </Text>
                       <View style={styles.itemsContainer}>
                         {shopList.items
-                          .slice(0, height_style.minHeight / 20)
+                          .slice(0, shopList.minHeight / 20)
                           .map((item) => (
                             <Text style={styles.itemText} key={item.id}>
                               {item.name}
@@ -113,11 +117,13 @@ const App = () => {
               {shopLists
                 .filter((_, i) => i % 2 === 1)
                 .map((shopList, idx) => {
-                  const height_style = getRandomCardHeightStyle();
                   return (
                     <TouchableOpacity
                       key={shopList.id}
-                      style={[styles.listCard, height_style]}
+                      style={[
+                        styles.listCard,
+                        { minHeight: shopList.minHeight },
+                      ]}
                       onPress={() =>
                         router.push({
                           pathname: "/shoplist-inside",
@@ -132,7 +138,7 @@ const App = () => {
                       </Text>
                       <View style={styles.itemsContainer}>
                         {shopList.items
-                          .slice(0, height_style.minHeight / 20)
+                          .slice(0, shopList.minHeight / 20)
                           .map((item) => (
                             <Text style={styles.itemText} key={item.id}>
                               {item.name}
