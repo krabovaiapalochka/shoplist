@@ -14,6 +14,20 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
    ```bash
    npx expo start
+   npx expo start --android
+   ```
+
+3. clean the terminal before launching
+   ```bash
+   npx expo start -c
+   ```
+4. clean the cache
+   ```bath
+   npx expo start --clear
+   ```
+5. Commit
+   ```bath
+   git add .
    ```
 
 In the output, you'll find options to open the app in a

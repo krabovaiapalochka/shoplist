@@ -14,6 +14,8 @@ import {
 } from "react-native";
 import { useShopLists } from "./ShopListContext";
 
+const FAB_POSITION = 35;
+
 const getRandomCardHeightStyle = (min = 100, max = 180) => {
   return { minHeight: Math.floor(Math.random() * max) + min };
 };
@@ -32,6 +34,24 @@ const App = () => {
     const minHeight = getRandomCardHeightStyle().minHeight;
     const newListId = addShopList(`Список ${shopLists.length + 1}`, minHeight);
   };
+
+  const getFilteredLists = () => {
+    if (!searchText.trim()) return shopLists;
+    const search = searchText.toLowerCase();
+    return [...shopLists].sort((a, b) => {
+      const titleA = (a.title === "Заголовок" ? `Список ${shopLists.indexOf(a) + 1}` : a.title).toLowerCase();
+      const titleB = (b.title === "Заголовок" ? `Список ${shopLists.indexOf(b) + 1}` : b.title).toLowerCase();
+      const exactA = titleA === search;
+      const exactB = titleB === search;
+      if (exactA && !exactB) return -1;
+      if (!exactA && exactB) return 1;
+      if (titleA.startsWith(search) && !titleB.startsWith(search)) return -1;
+      if (!titleA.startsWith(search) && titleB.startsWith(search)) return 1;
+      return titleA.indexOf(search) - titleB.indexOf(search);
+    });
+  };
+
+  const filteredLists = getFilteredLists();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -78,7 +98,7 @@ const App = () => {
 
           <View style={styles.masonryContainer}>
             <View style={styles.masonryColumn}>
-              {shopLists
+              {filteredLists
                 .filter((_, i) => i % 2 === 0)
                 .map((shopList, idx) => {
                   return (
@@ -97,7 +117,7 @@ const App = () => {
                     >
                       <Text style={styles.listTitle}>
                         {shopList.title === "Заголовок"
-                          ? `Список ${idx + 1}`
+                          ? `Список ${filteredLists.indexOf(shopList) + 1}`
                           : shopList.title}
                       </Text>
                       <View style={styles.itemsContainer}>
@@ -114,7 +134,7 @@ const App = () => {
                 })}
             </View>
             <View style={styles.masonryColumn}>
-              {shopLists
+              {filteredLists
                 .filter((_, i) => i % 2 === 1)
                 .map((shopList, idx) => {
                   return (
@@ -133,7 +153,7 @@ const App = () => {
                     >
                       <Text style={styles.listTitle}>
                         {shopList.title === "Заголовок"
-                          ? `Список ${idx + 1}`
+                          ? `Список ${filteredLists.indexOf(shopList) + 1}`
                           : shopList.title}
                       </Text>
                       <View style={styles.itemsContainer}>
@@ -154,13 +174,7 @@ const App = () => {
           <View style={{ height: 100 }} />
         </ScrollView>
 
-        <TouchableOpacity style={styles.fab} onPress={handleAddList}>
-          <Text style={styles.fabText}>+</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.fab, { right: 160 }]}
-          onPress={handleAddListDebug}
-        >
+        <TouchableOpacity style={[styles.fab, { right: FAB_POSITION }]} onPress={handleAddListDebug}>
           <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>
       </ImageBackground>
@@ -199,7 +213,7 @@ const styles = StyleSheet.create({
     height: 48,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#becc73",
+    backgroundColor: "#8faa4f",
     borderRadius: 25,
     paddingHorizontal: 15,
   },
@@ -207,14 +221,14 @@ const styles = StyleSheet.create({
     width: 55,
     height: 55,
     borderRadius: 27.5,
-    backgroundColor: "#E3E8C2",
+    backgroundColor: "#c5d3a8",
     justifyContent: "center",
     alignItems: "center",
   },
   avatar: {
     width: 85,
     height: 95,
-    backgroundColor: "#becc73",
+    backgroundColor: "#8faa4f",
     borderRadius: 15,
     justifyContent: "center",
     alignItems: "center",
@@ -237,7 +251,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    color: "#5a7a3a",
+    color: "#4a6530",
     marginBottom: 15,
     fontWeight: "500",
   },
@@ -251,7 +265,7 @@ const styles = StyleSheet.create({
   },
 
   listCard: {
-    backgroundColor: "#E3E8C2",
+    backgroundColor: "#c5d3a8",
     borderRadius: 15,
     padding: 15,
     width: "100%",
@@ -267,7 +281,7 @@ const styles = StyleSheet.create({
   },
   listTitle: {
     fontSize: 17,
-    color: "#5a7a3a",
+    color: "#4a6530",
     marginBottom: 10,
     fontWeight: "600",
   },
@@ -276,24 +290,24 @@ const styles = StyleSheet.create({
   },
   itemText: {
     fontSize: 14,
-    color: "#5a7a3a",
+    color: "#4a6530",
     marginBottom: 4,
   },
   fab: {
     position: "absolute",
-    right: 35,
-    bottom: 60,
+    right: 30,
+    bottom: 30,
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "#becc73",
+    backgroundColor: "#8faa4f",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 5,
+    shadowRadius: 3,
+    elevation: 3,
   },
   fabText: {
     fontSize: 70,

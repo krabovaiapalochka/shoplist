@@ -14,6 +14,8 @@ import { useRouter } from "expo-router";
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const [username, setUsername] = useState("IGGY");
+  const [isEditing, setIsEditing] = useState(false);
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [birthday, setBirthday] = useState("");
@@ -34,8 +36,8 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         <View style={styles.card}>
-          <TouchableOpacity style={styles.editButton}>
-            <Ionicons name="create-outline" size={24} color="#5a7a3a" />
+          <TouchableOpacity style={styles.editButton} onPress={() => setIsEditing(!isEditing)}>
+            <Ionicons name={isEditing ? "checkmark" : "create-outline"} size={24} color="#5a7a3a" />
           </TouchableOpacity>
 
           <View style={styles.avatarContainer}>
@@ -44,7 +46,20 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          <Text style={styles.username}>IGGY</Text>
+          {isEditing ? (
+            <TextInput
+              style={styles.usernameInput}
+              value={username}
+              onChangeText={setUsername}
+              placeholder="username"
+              placeholderTextColor="rgba(90, 122, 58, 0.5)"
+              autoFocus
+            />
+          ) : (
+            <TouchableOpacity onPress={() => setIsEditing(true)}>
+              <Text style={styles.username}>{username || "username"}</Text>
+            </TouchableOpacity>
+          )}
 
           <View style={styles.inputContainer}>
             <TextInput
@@ -137,7 +152,7 @@ const styles = StyleSheet.create({
   avatarContainer: {
     marginTop: -60,
     zIndex: 2,
-    marginBottom: 15,
+    marginBottom: 10,
   },
   avatar: {
     width: 160,
@@ -153,8 +168,25 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#5a7a3a",
+    marginBottom: 25,
+    borderBottomWidth: 1,
+    borderBottomColor: "transparent",
+    paddingVertical: 5,
+    minWidth: 150,
+    textAlign: "center",
+    height: 40,
+  },
+  usernameInput: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#5a7a3a",
     marginBottom: 30,
-    textTransform: "uppercase",
+    borderBottomWidth: 1,
+    borderBottomColor: "#5a7a3a",
+    paddingVertical: 5,
+    minWidth: 150,
+    textAlign: "center",
+    height: 40,
   },
   inputContainer: {
     width: "85%",

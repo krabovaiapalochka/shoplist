@@ -74,8 +74,8 @@ export default function Index() {
     }
   };
 
-  const searchHeaderIconColor = "#becc73";
-  const searchHeaderTextColor = "#becc73";
+  const searchHeaderIconColor = "#8faa4f";
+  const searchHeaderTextColor = "#8faa4f";
 
   const title = shopList?.title || "";
   const searchTitle = title === "Заголовок" ? "Список 1" : title;
@@ -128,16 +128,8 @@ export default function Index() {
               color={searchHeaderIconColor}
             />
           </TouchableOpacity>
-          <Text
-            style={[
-              styles.headerTitle,
-              styles.searchTitle,
-              { color: searchHeaderTextColor },
-            ]}
-          >
-            {searchTitle}
-          </Text>
         </View>
+        <Text style={styles.searchTitle}>{searchTitle}</Text>
 
         <View style={styles.searchContainer}>
           <View style={styles.searchBar}>
@@ -182,19 +174,19 @@ export default function Index() {
           onPress={() => router.push("/list-of-shoplists")}
           style={styles.backButton}
         >
-          <Ionicons name="arrow-back" size={24} color="#becc73" />
+          <Ionicons name="arrow-back" size={24} color="#8faa4f" />
         </TouchableOpacity>
 
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.headerIcon}>
-            <Ionicons name="share-outline" size={24} color="#becc73" />
+            <Ionicons name="share-outline" size={24} color="#8faa4f" />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerIcon}
             onPress={() => setShowMenu(true)}
             activeOpacity={1}
           >
-            <Ionicons name="ellipsis-horizontal" size={24} color="#becc73" />
+            <Ionicons name="ellipsis-horizontal" size={24} color="#8faa4f" />
           </TouchableOpacity>
 
           {showMenu && (
@@ -210,7 +202,7 @@ export default function Index() {
                   onPress={handleDeleteList}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="trash-outline" size={16} color="#d66767" />
+                  <Ionicons name="trash-outline" size={18} color="#d66767" />
                   <Text style={styles.menuItemText}>Удалить</Text>
                 </TouchableOpacity>
               </View>
@@ -295,8 +287,7 @@ const styles = StyleSheet.create({
   searchHeader: {
     flexDirection: "column",
     alignItems: "flex-start",
-    marginLeft: -20,
-    marginBottom: 10,
+    marginBottom: 20,
   },
   backButton: {
     padding: 5,
@@ -314,12 +305,14 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#333",
+    color: "#8faa4f",
   },
   searchTitle: {
-    paddingTop: 15,
-    marginTop: 10,
-    marginLeft: 20,
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#8faa4f",
+    marginLeft: 10,
+    marginBottom: 20,
   },
   titleContainer: {
     marginBottom: 20,
@@ -327,15 +320,15 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#becc73",
+    color: "#8faa4f",
   },
   titleInput: {
     fontSize: 24,
     fontWeight: "bold",
     borderBottomWidth: 1,
-    borderBottomColor: "#becc73",
+    borderBottomColor: "#8faa4f",
     paddingVertical: 5,
-    color: "#becc73",
+    color: "#8faa4f",
   },
   listContent: {
     paddingBottom: 100,
@@ -358,8 +351,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   checkCircleChecked: {
-    backgroundColor: "#becc73",
-    borderColor: "#becc73",
+    backgroundColor: "#8faa4f",
+    borderColor: "#8faa4f",
   },
   itemText: {
     flex: 1,
@@ -381,7 +374,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "#becc73",
+    backgroundColor: "#8faa4f",
     justifyContent: "center",
     alignItems: "center",
     elevation: 3,
@@ -391,7 +384,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
   },
   searchContainer: {
-    backgroundColor: "#f4f4e6",
+    backgroundColor: "#8faa4f",
     marginHorizontal: 30,
     marginTop: 20,
     borderRadius: 20,
@@ -401,7 +394,7 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#becc73",
+    backgroundColor: "#c5d3a8",
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 8,
@@ -414,7 +407,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   searchResultsList: {
-    backgroundColor: "#becc73",
+    backgroundColor: "#c5d3a8",
     borderRadius: 20,
     padding: 5,
   },
@@ -424,7 +417,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: "#becc73",
+    borderBottomColor: "#c5d3a8",
   },
   searchResultText: {
     fontSize: 16,
@@ -451,7 +444,7 @@ const styles = StyleSheet.create({
     top: 60,
     right: 3,
     width: 140,
-    backgroundColor: "#fff",
+    backgroundColor: "#f5f5f5",
     borderRadius: 15,
     padding: 10,
     shadowColor: "#000",
@@ -463,14 +456,14 @@ const styles = StyleSheet.create({
   },
   menuItem: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-end",
     padding: 12,
     backgroundColor: "transparent",
   },
   menuItemText: {
     fontSize: 14,
     color: "#d66767",
-    marginLeft: 6,
+    marginLeft: 10,
     flex: 1,
     textAlign: "left",
   },
