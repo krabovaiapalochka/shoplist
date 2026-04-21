@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState } from "react";
 
-interface Item {
+export interface Item {
   id: string;
   name: string;
   purchased: boolean;
 }
 
-interface ShopList {
+export interface ShopList {
   id: string;
   title: string;
   items: Item[];

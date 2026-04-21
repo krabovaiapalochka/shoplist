@@ -12,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useShopLists } from "./ShopListContext";
+import { Item, ShopList, useShopLists } from "./ShopListContext";
 
 const FAB_POSITION = 35;
 const maxItems = 15;
@@ -55,9 +55,9 @@ const App = () => {
 
   const filteredLists = getFilteredLists();
   // 1. Создаем функцию распределения
-  const distributeData = (data) => {
-    const left = [];
-    const right = [];
+  const distributeData = (data: Array<ShopList>) => {
+    const left: Array<ShopList> = [];
+    const right: Array<ShopList> = [];
     let leftH = 0;
     let rightH = 0;
     data.forEach((item) => {
@@ -145,7 +145,7 @@ const App = () => {
                         : shopList.title}
                     </Text>
                     <View style={styles.itemsContainer}>
-                      {shopList.items.slice(0, maxItems).map((item) => (
+                      {shopList.items.slice(0, maxItems).map((item: Item) => (
                         <Text style={styles.itemText} key={item.id}>
                           {item.name}
                         </Text>
@@ -177,7 +177,7 @@ const App = () => {
                         : shopList.title}
                     </Text>
                     <View style={styles.itemsContainer}>
-                      {shopList.items.slice(0, maxItems).map((item) => (
+                      {shopList.items.slice(0, maxItems).map((item: Item) => (
                         <Text style={styles.itemText} key={item.id}>
                           {item.name}
                         </Text>
