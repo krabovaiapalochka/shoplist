@@ -8,6 +8,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ScrollView,
 } from "react-native";
 import { useShopLists } from "./ShopListContext";
 
@@ -65,6 +66,7 @@ export default function Index() {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showShareModal, setShowShareModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
 
   const handleDeleteList = () => {
@@ -72,6 +74,10 @@ export default function Index() {
       deleteShopList(id);
       router.push("/list-of-shoplists");
     }
+  };
+
+  const handleGoBack = () => {
+    router.push("/list-of-shoplists");
   };
 
   const searchHeaderIconColor = "#8faa4f";
@@ -171,41 +177,38 @@ export default function Index() {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.push("/list-of-shoplists")}
+          onPress={handleGoBack}
           style={styles.backButton}
         >
           <Ionicons name="arrow-back" size={24} color="#8faa4f" />
         </TouchableOpacity>
 
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.headerIcon}>
+          <TouchableOpacity 
+            style={styles.headerIcon}
+            onPress={() => setShowShareModal(true)}
+          >
             <Ionicons name="share-outline" size={24} color="#8faa4f" />
           </TouchableOpacity>
-          <TouchableOpacity
+          <TouchableOpacity 
             style={styles.headerIcon}
-            onPress={() => setShowMenu(true)}
-            activeOpacity={1}
+            onPress={() => setShowMenu(!showMenu)}
           >
             <Ionicons name="ellipsis-horizontal" size={24} color="#8faa4f" />
           </TouchableOpacity>
 
           {showMenu && (
-            <View style={styles.menuOverlay}>
+            <View style={styles.menuContainer}>
               <TouchableOpacity
-                style={styles.menuBackdrop}
-                onPress={() => setShowMenu(false)}
-                activeOpacity={1}
-              />
-              <View style={styles.menuContainer} pointerEvents="box-none">
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={handleDeleteList}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="trash-outline" size={18} color="#d66767" />
-                  <Text style={styles.menuItemText}>Удалить</Text>
-                </TouchableOpacity>
-              </View>
+                style={styles.menuItem}
+                onPress={() => {
+                  handleDeleteList();
+                  setShowMenu(false);
+                }}
+              >
+                <Ionicons name="trash-outline" size={18} color="#d66767" />
+                <Text style={styles.menuItemText}>Удалить</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -267,6 +270,76 @@ export default function Index() {
       <TouchableOpacity style={styles.fab} onPress={() => setIsSearching(true)}>
         <Ionicons name="add" size={58} color="#fff" />
       </TouchableOpacity>
+
+      {showShareModal && (
+        <View style={styles.shareModalOverlay}>
+          <TouchableOpacity 
+            style={styles.shareModalBackdrop} 
+            onPress={() => setShowShareModal(false)} 
+          />
+          <View style={styles.shareModalContainer}>
+            <View style={styles.shareModalHeader}>
+              <View style={styles.shareAppIcon}>
+                <Ionicons name="basket-outline" size={32} color="#fff" />
+              </View>
+              <Text style={styles.shareLink}>shoplist.app/list/{id}</Text>
+              <TouchableOpacity onPress={() => setShowShareModal(false)}>
+                <Ionicons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.shareDivider} />
+            
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.shareAppsScrollContent}
+            >
+              <TouchableOpacity style={styles.shareAppItem}>
+                <View style={styles.shareAppIconLarge}>
+                  <Ionicons name="chatbubbles-outline" size={32} color="#fff" />
+                </View>
+                <Text style={styles.shareAppName}>Сообщения</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.shareAppItem}>
+                <View style={styles.shareAppIconLarge}>
+                  <Ionicons name="mail-outline" size={32} color="#fff" />
+                </View>
+                <Text style={styles.shareAppName}>Почта</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.shareAppItem}>
+                <View style={styles.shareAppIconLarge}>
+                  <Ionicons name="paper-plane-outline" size={32} color="#fff" />
+                </View>
+                <Text style={styles.shareAppName}>Telegram</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.shareAppItem}>
+                <View style={styles.shareAppIconLarge}>
+                  <Ionicons name="logo-vk" size={32} color="#fff" />
+                </View>
+                <Text style={styles.shareAppName}>VK</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.shareAppItem}>
+                <View style={styles.shareAppIconLarge}>
+                  <Ionicons name="globe-outline" size={32} color="#fff" />
+                </View>
+                <Text style={styles.shareAppName}>Mail.ru</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.shareAppItem}>
+                <View style={styles.shareAppIconLarge}>
+                  <Ionicons name="at-outline" size={32} color="#fff" />
+                </View>
+                <Text style={styles.shareAppName}>Gmail</Text>
+              </TouchableOpacity>
+            </ScrollView>
+
+            <View style={styles.shareCopySection}>
+              <Text style={styles.shareCopyText}>Скопировать</Text>
+              <Ionicons name="copy-outline" size={20} color="#666" />
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -424,47 +497,118 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#2c4829",
   },
-  menuOverlay: {
+  shareModalOverlay: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
   },
-  menuBackdrop: {
+  shareModalBackdrop: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "transparent",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  shareModalContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: "30%",
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    padding: 30,
+  },
+  shareModalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 30,
+  },
+  shareAppIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 15,
+    backgroundColor: "#8faa4f",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  shareLink: {
+    flex: 1,
+    fontSize: 17,
+    color: "#333",
+  },
+  shareAppsSection: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  shareDivider: {
+    height: 1,
+    backgroundColor: "#eee",
+    marginBottom: 20,
+  },
+  shareAppsScrollContent: {
+    paddingRight: 20,
+  },
+  shareAppItem: {
+    alignItems: "center",
+    marginRight: 25,
+  },
+  shareAppIconLarge: {
+    width: 60,
+    height: 60,
+    borderRadius: 15,
+    backgroundColor: "#8faa4f",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  shareAppName: {
+    fontSize: 12,
+    color: "#333",
+    textAlign: "center",
+  },
+  shareCopySection: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 15,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+  },
+  shareCopyText: {
+    fontSize: 17,
+    color: "#333",
+    marginRight: 10,
   },
   menuContainer: {
     position: "absolute",
-    top: 60,
-    right: 3,
-    width: 140,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 15,
-    padding: 10,
+    top: 40,
+    right: 0,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 8,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 5,
     elevation: 5,
-    pointerEvents: "box-none",
+    zIndex: 101,
   },
   menuItem: {
     flexDirection: "row",
-    alignItems: "flex-end",
+    alignItems: "center",
     padding: 12,
-    backgroundColor: "transparent",
   },
   menuItemText: {
     fontSize: 14,
     color: "#d66767",
-    marginLeft: 10,
-    flex: 1,
-    textAlign: "left",
+    marginLeft: 8,
   },
 });

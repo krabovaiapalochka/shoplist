@@ -7,7 +7,8 @@ import {
   TouchableOpacity, 
   SafeAreaView,
   StatusBar,
-  ImageBackground
+  ImageBackground,
+  Alert
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -19,6 +20,29 @@ export default function ProfileScreen() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [birthday, setBirthday] = useState("");
+  const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+
+  const handleAvatarPress = () => {
+    setShowAvatarMenu(!showAvatarMenu);
+  };
+
+  const handleChangePhoto = () => {
+    setShowAvatarMenu(false);
+    // Здесь можно добавить логику выбора фото из галереи
+    Alert.alert("Изменить фото", "Открыть выбор фото из галереи");
+  };
+
+  const handleDeletePhoto = () => {
+    setShowAvatarMenu(false);
+    Alert.alert(
+      "Удалить фото",
+      "Вы уверены, что хотите удалить фото?",
+      [
+        { text: "Отмена", style: "cancel" },
+        { text: "Удалить", style: "destructive", onPress: () => console.log("Фото удалено") }
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -41,9 +65,34 @@ export default function ProfileScreen() {
           </TouchableOpacity>
 
           <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
+            <TouchableOpacity style={styles.avatar} onPress={handleAvatarPress} activeOpacity={0.7}>
               <Ionicons name="person-outline" size={50} color="#fff" />
-            </View>
+              <View style={styles.cameraIcon}>
+                <Ionicons name="camera" size={20} color="#fff" />
+              </View>
+            </TouchableOpacity>
+            
+            {showAvatarMenu && (
+              <View style={styles.menuContainer}>
+                <TouchableOpacity 
+                  style={styles.menuItem} 
+                  onPress={handleChangePhoto}
+                >
+                  <Text style={styles.menuItemText}>Изменить фото</Text>
+                  <Ionicons name="create-outline" size={20} color="#5a7a3a" />
+                </TouchableOpacity>
+                
+                <View style={styles.menuDivider} />
+                
+                <TouchableOpacity 
+                  style={styles.menuItem} 
+                  onPress={handleDeletePhoto}
+                >
+                  <Text style={[styles.menuItemText, styles.deleteText]}>Удалить фото</Text>
+                  <Ionicons name="trash-outline" size={20} color="#d66767" />
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           {isEditing ? (
@@ -94,7 +143,9 @@ export default function ProfileScreen() {
         <TouchableOpacity style={styles.exitButton}>
           <Text style={styles.exitText}>Выйти</Text>
         </TouchableOpacity>
-      </ImageBackground>
+
+        {/* Меню аватара - теперь отображается под аватаром */}
+        </ImageBackground>
     </SafeAreaView>
   );
 }
@@ -163,6 +214,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 0,
     borderColor: "#f0f3d6",
+    position: "relative",
+  },
+  cameraIcon: {
+    position: "absolute",
+    bottom: 5,
+    right: 5,
+    backgroundColor: "#8faa4f",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 3,
+    borderColor: "#c5d3a8",
   },
   username: {
     fontSize: 24,
@@ -223,5 +288,40 @@ const styles = StyleSheet.create({
     color: "#b84545",
     fontSize: 16,
     fontWeight: "600",
+  },
+  menuContainer: {
+    position: "absolute",
+    top: 165,
+    left: -17,
+    backgroundColor: "#fff",
+    borderRadius: 15,
+    paddingVertical: 10,
+    minWidth: 200,
+    elevation: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    zIndex: 100,
+  },
+  menuItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+  },
+  menuItemText: {
+    fontSize: 16,
+    color: "#333",
+    fontWeight: "500",
+  },
+  deleteText: {
+    color: "#d66767",
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: "#e0e0e0",
+    marginVertical: 5,
   },
 });

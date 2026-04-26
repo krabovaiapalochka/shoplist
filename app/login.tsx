@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: "100%",
     color: "#fff",
-    fontSize: 16,
+    fontSize: 17,
   },
   usernameIcon: {
     position: "absolute",

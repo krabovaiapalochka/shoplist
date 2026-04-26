@@ -15,7 +15,7 @@ import {
 import { Item, ShopList, useShopLists } from "./ShopListContext";
 
 const FAB_POSITION = 35;
-const maxItems = 15;
+const maxItems = 7;
 
 const App = () => {
   const router = useRouter();
@@ -128,6 +128,7 @@ const App = () => {
               onLayout={(e) => setLeftColHeight(e.nativeEvent.layout.height)}
             >
               {left.map((shopList) => {
+                const allPurchased = shopList.items.length > 0 && shopList.items.every((item: Item) => item.purchased);
                 return (
                   <TouchableOpacity
                     key={shopList.id}
@@ -139,14 +140,19 @@ const App = () => {
                       })
                     }
                   >
-                    <Text style={styles.listTitle}>
-                      {shopList.title === "Заголовок"
-                        ? `Список ${filteredLists.indexOf(shopList) + 1}`
-                        : shopList.title}
-                    </Text>
+                    <View style={styles.cardTitleRow}>
+                      <Text style={styles.listTitle}>
+                        {shopList.title === "Заголовок"
+                          ? `Список ${filteredLists.indexOf(shopList) + 1}`
+                          : shopList.title}
+                      </Text>
+                      {allPurchased && (
+                        <Ionicons name="checkmark" size={24} color="#4a6530" />
+                      )}
+                    </View>
                     <View style={styles.itemsContainer}>
                       {shopList.items.slice(0, maxItems).map((item: Item) => (
-                        <Text style={styles.itemText} key={item.id}>
+                        <Text style={[styles.itemText, item.purchased && styles.itemTextPurchased]} key={item.id}>
                           {item.name}
                         </Text>
                       ))}
@@ -160,6 +166,7 @@ const App = () => {
               onLayout={(e) => setRightColHeight(e.nativeEvent.layout.height)}
             >
               {right.map((shopList) => {
+                const allPurchased = shopList.items.length > 0 && shopList.items.every((item: Item) => item.purchased);
                 return (
                   <TouchableOpacity
                     key={shopList.id}
@@ -171,14 +178,19 @@ const App = () => {
                       })
                     }
                   >
-                    <Text style={styles.listTitle}>
-                      {shopList.title === "Заголовок"
-                        ? `Список ${filteredLists.indexOf(shopList) + 1}`
-                        : shopList.title}
-                    </Text>
+                    <View style={styles.cardTitleRow}>
+                      <Text style={styles.listTitle}>
+                        {shopList.title === "Заголовок"
+                          ? `Список ${filteredLists.indexOf(shopList) + 1}`
+                          : shopList.title}
+                      </Text>
+                      {allPurchased && (
+                        <Ionicons name="checkmark" size={24} color="#4a6530" />
+                      )}
+                    </View>
                     <View style={styles.itemsContainer}>
                       {shopList.items.slice(0, maxItems).map((item: Item) => (
-                        <Text style={styles.itemText} key={item.id}>
+                        <Text style={[styles.itemText, item.purchased && styles.itemTextPurchased]} key={item.id}>
                           {item.name}
                         </Text>
                       ))}
@@ -194,7 +206,7 @@ const App = () => {
 
         <TouchableOpacity
           style={[styles.fab, { right: FAB_POSITION }]}
-          onPress={handleAddListDebug}
+          onPress={handleAddList}
         >
           <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>
@@ -299,6 +311,13 @@ const styles = StyleSheet.create({
     color: "#4a6530",
     marginBottom: 10,
     fontWeight: "600",
+    flex: 1,
+  },
+  cardTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
   },
   itemsContainer: {
     alignItems: "flex-start",
@@ -307,6 +326,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#4a6530",
     marginBottom: 4,
+  },
+  itemTextPurchased: {
+    textDecorationLine: "line-through",
+    color: "#888",
   },
   fab: {
     position: "absolute",
