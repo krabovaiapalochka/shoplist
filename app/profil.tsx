@@ -8,19 +8,19 @@ import {
   SafeAreaView,
   StatusBar,
   ImageBackground,
-  Alert
+  Modal
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useUser } from "./UserContext";
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const [username, setUsername] = useState("IGGY");
+  const { user, setUsername, setPhone, setEmail, setBirthday, setAvatarUri } = useUser();
   const [isEditing, setIsEditing] = useState(false);
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [birthday, setBirthday] = useState("");
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+  const [photoModalVisible, setPhotoModalVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   const handleAvatarPress = () => {
     setShowAvatarMenu(!showAvatarMenu);
@@ -28,20 +28,24 @@ export default function ProfileScreen() {
 
   const handleChangePhoto = () => {
     setShowAvatarMenu(false);
-    // Здесь можно добавить логику выбора фото из галереи
-    Alert.alert("Изменить фото", "Открыть выбор фото из галереи");
+    setPhotoModalVisible(true);
   };
 
   const handleDeletePhoto = () => {
     setShowAvatarMenu(false);
-    Alert.alert(
-      "Удалить фото",
-      "Вы уверены, что хотите удалить фото?",
-      [
-        { text: "Отмена", style: "cancel" },
-        { text: "Удалить", style: "destructive", onPress: () => console.log("Фото удалено") }
-      ]
-    );
+    setDeleteModalVisible(true);
+  };
+
+  const handleConfirmDeletePhoto = () => {
+    setDeleteModalVisible(false);
+  };
+
+  const handleSelectFromGallery = () => {
+    setPhotoModalVisible(false);
+  };
+
+  const handleTakePhoto = () => {
+    setPhotoModalVisible(false);
   };
 
   return (
@@ -98,7 +102,7 @@ export default function ProfileScreen() {
           {isEditing ? (
             <TextInput
               style={styles.usernameInput}
-              value={username}
+              value={user.username}
               onChangeText={setUsername}
               placeholder="username"
               placeholderTextColor="rgba(90, 122, 58, 0.5)"
@@ -106,7 +110,7 @@ export default function ProfileScreen() {
             />
           ) : (
             <TouchableOpacity onPress={() => setIsEditing(true)}>
-              <Text style={styles.username}>{username || "username"}</Text>
+              <Text style={styles.username}>{user.username || "username"}</Text>
             </TouchableOpacity>
           )}
 
@@ -115,7 +119,7 @@ export default function ProfileScreen() {
               style={styles.inputField}
               placeholder="Номер тел."
               placeholderTextColor="#4a6530"
-              value={phone}
+              value={user.phone}
               onChangeText={setPhone}
               keyboardType="phone-pad"
             />
@@ -124,7 +128,7 @@ export default function ProfileScreen() {
               style={styles.inputField}
               placeholder="Эл.почта"
               placeholderTextColor="#4a6530"
-              value={email}
+              value={user.email}
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -134,7 +138,7 @@ export default function ProfileScreen() {
               style={styles.inputField}
               placeholder="Дата рожд."
               placeholderTextColor="#4a6530"
-              value={birthday}
+              value={user.birthday}
               onChangeText={setBirthday}
             />
           </View>
@@ -143,6 +147,76 @@ export default function ProfileScreen() {
         <TouchableOpacity style={styles.exitButton}>
           <Text style={styles.exitText}>Выйти</Text>
         </TouchableOpacity>
+
+        <Modal
+          visible={photoModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setPhotoModalVisible(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setPhotoModalVisible(false)}
+          >
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Изменить фото</Text>
+              <TouchableOpacity 
+                style={styles.photoModalButton}
+                onPress={handleSelectFromGallery}
+              >
+                <Ionicons name="images-outline" size={22} color="#4a6530" />
+                <Text style={styles.photoModalButtonText}>Выбрать из галереи</Text>
+              </TouchableOpacity>
+              <View style={styles.buttonDivider} />
+              <TouchableOpacity 
+                style={styles.photoModalButton}
+                onPress={handleTakePhoto}
+              >
+                <Ionicons name="camera-outline" size={22} color="#4a6530" />
+                <Text style={styles.photoModalButtonText}>Сделать фото</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.cancelButtonCenter}
+                onPress={() => setPhotoModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonCenterText}>Отмена</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+
+        <Modal
+          visible={deleteModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setDeleteModalVisible(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setDeleteModalVisible(false)}
+          >
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Удалить фото</Text>
+              <Text style={styles.modalSubtitle}>Вы уверены, что хотите удалить фото?</Text>
+              <View style={styles.deleteButtonsRow}>
+                <TouchableOpacity 
+                  style={styles.deleteModalButton}
+                  onPress={handleConfirmDeletePhoto}
+                >
+                  <Text style={styles.deleteModalButtonText}>Удалить</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.deleteModalCancelButton}
+                  onPress={() => setDeleteModalVisible(false)}
+                >
+                  <Text style={styles.deleteModalCancelButtonText}>Отмена</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </Modal>
 
         {/* Меню аватара - теперь отображается под аватаром */}
         </ImageBackground>
@@ -323,5 +397,127 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "#e0e0e0",
     marginVertical: 5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 20,
+    width: 330,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 18,
+    color: "#4a6530",
+    marginBottom: 15,
+    fontWeight: "600",
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  modalButton: {
+    backgroundColor: "#4a6530",
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+    width: "100%",
+    marginBottom: 10,
+  },
+  modalButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: 600,
+    textAlign: "center",
+  },
+  modalCancelButton: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#4a6530",
+    marginTop: 5,
+  },
+  modalCancelButtonText: {
+    color: "#4a6530",
+    fontSize: 16,
+    fontWeight: 600,
+    textAlign: "center",
+  },
+  photoModalButton: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ffffff",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  buttonDivider: {
+    height: 1,
+    backgroundColor: "#4a6530",
+    width: "100%",
+    marginVertical: 5,
+  },
+  photoModalButtonText: {
+    color: "#4a6530",
+    fontSize: 16,
+    fontWeight: 600,
+    marginLeft: 10,
+  },
+  cancelButtonCenter: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#4a6530",
+    paddingVertical: 9,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+    marginTop: 10,
+  },
+  cancelButtonCenterText: {
+    color: "#4a6530",
+    fontSize: 16,
+    fontWeight: 600,
+  },
+  deleteModalButton: {
+    backgroundColor: "#4a6530",
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    width: "45%",
+    marginRight: 5,
+  },
+  deleteModalButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: 600,
+    textAlign: "center",
+  },
+  deleteModalCancelButton: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#4a6530",
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    width: "45%",
+    marginLeft: 5,
+  },
+  deleteModalCancelButtonText: {
+    color: "#4a6530",
+    fontSize: 14,
+    fontWeight: 600,
+    textAlign: "center",
+  },
+  deleteButtonsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    width: "100%",
   },
 });

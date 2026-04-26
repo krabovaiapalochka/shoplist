@@ -58,6 +58,7 @@ export default function Index() {
     addItemToList,
     removeItemFromList,
     toggleItemPurchased,
+    updateItemQuantity,
     deleteShopList,
   } = useShopLists();
 
@@ -114,6 +115,15 @@ export default function Index() {
   const handleTogglePurchased = (itemId: string) => {
     if (id) {
       toggleItemPurchased(id, itemId);
+    }
+  };
+
+  const handleQuantityChange = (itemId: string, delta: number) => {
+    if (id) {
+      const item = items.find((i) => i.id === itemId);
+      if (item) {
+        updateItemQuantity(id, itemId, item.quantity + delta);
+      }
     }
   };
 
@@ -255,6 +265,22 @@ export default function Index() {
             >
               {item.name}
             </Text>
+
+            <View style={styles.quantityContainer}>
+              <TouchableOpacity
+                style={styles.quantityButton}
+                onPress={() => handleQuantityChange(item.id, -1)}
+              >
+                <Ionicons name="remove" size={18} color="#fff" />
+              </TouchableOpacity>
+              <Text style={styles.quantityText}>{item.quantity}</Text>
+              <TouchableOpacity
+                style={styles.quantityButton}
+                onPress={() => handleQuantityChange(item.id, 1)}
+              >
+                <Ionicons name="add" size={18} color="#fff" />
+              </TouchableOpacity>
+            </View>
 
             <TouchableOpacity onPress={() => handleRemoveItem(item.id)}>
               <Ionicons name="trash-outline" size={22} color="#666" />
@@ -610,5 +636,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#d66767",
     marginLeft: 8,
+  },
+  quantityContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  quantityButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#8faa4f",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  quantityText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    marginHorizontal: 8,
+    minWidth: 20,
+    textAlign: "center",
   },
 });

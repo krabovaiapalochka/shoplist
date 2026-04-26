@@ -4,6 +4,7 @@ export interface Item {
   id: string;
   name: string;
   purchased: boolean;
+  quantity: number;
 }
 
 export interface ShopList {
@@ -20,6 +21,7 @@ interface ShopListContextType {
   addItemToList: (listId: string, itemName: string) => void;
   removeItemFromList: (listId: string, itemId: string) => void;
   toggleItemPurchased: (listId: string, itemId: string) => void;
+  updateItemQuantity: (listId: string, itemId: string, quantity: number) => void;
   deleteShopList: (id: string) => void;
   getShopList: (id: string) => ShopList | undefined;
 }
@@ -36,9 +38,9 @@ export const ShopListProvider: React.FC<{ children: React.ReactNode }> = ({
       id: "1",
       title: "Список 1",
       items: [
-        { id: "1", name: "Молоко", purchased: false },
-        { id: "2", name: "Хлеб", purchased: true },
-        { id: "3", name: "Яйца", purchased: false },
+        { id: "1", name: "Молоко", purchased: false, quantity: 1 },
+        { id: "2", name: "Хлеб", purchased: true, quantity: 1 },
+        { id: "3", name: "Яйца", purchased: false, quantity: 1 },
       ],
       minHeight: 150,
     },
@@ -64,6 +66,7 @@ export const ShopListProvider: React.FC<{ children: React.ReactNode }> = ({
       id: Date.now().toString(),
       name: itemName,
       purchased: false,
+      quantity: 1,
     });
     // TODO: use setShopList but with React.memo
     // setShopLists(
@@ -108,6 +111,24 @@ export const ShopListProvider: React.FC<{ children: React.ReactNode }> = ({
     );
   };
 
+  const updateItemQuantity = (listId: string, itemId: string, quantity: number) => {
+    const validQuantity = Math.min(20, Math.max(1, quantity));
+    setShopLists(
+      shopLists.map((list) =>
+        list.id === listId
+          ? {
+              ...list,
+              items: list.items.map((item) =>
+                item.id === itemId
+                  ? { ...item, quantity: validQuantity }
+                  : item,
+              ),
+            }
+          : list,
+      ),
+    );
+  };
+
   const getShopList = (id: string) => shopLists.find((list) => list.id === id);
 
   const deleteShopList = (id: string) => {
@@ -123,6 +144,7 @@ export const ShopListProvider: React.FC<{ children: React.ReactNode }> = ({
         addItemToList,
         removeItemFromList,
         toggleItemPurchased,
+        updateItemQuantity,
         deleteShopList,
         getShopList,
       }}

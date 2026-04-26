@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   ImageBackground,
+  Modal,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -13,14 +14,20 @@ import {
   View,
 } from "react-native";
 import { Item, ShopList, useShopLists } from "./ShopListContext";
+import { useUser } from "./UserContext";
 
 const FAB_POSITION = 35;
 const maxItems = 7;
 
 const App = () => {
   const router = useRouter();
-  const { shopLists, addShopList, addItemToList } = useShopLists();
+  const { shopLists, addShopList, addItemToList, deleteShopList } = useShopLists();
+  const { user } = useUser();
   const [searchText, setSearchText] = useState("");
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [shopListToDelete, setShopListToDelete] = useState<string | null>(null);
+  const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [newListTitle, setNewListTitle] = useState("");
 
   const [leftColHeight, setLeftColHeight] = useState(0);
   const [rightColHeight, setRightColHeight] = useState(0);
@@ -31,6 +38,40 @@ const App = () => {
   };
   const handleAddListDebug = () => {
     const newListId = addShopList(`Список ${shopLists.length + 1}`, 14);
+  };
+
+  const handleDeletePress = (id: string) => {
+    setShopListToDelete(id);
+    setDeleteModalVisible(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (shopListToDelete) {
+      deleteShopList(shopListToDelete);
+      setShopListToDelete(null);
+      setDeleteModalVisible(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShopListToDelete(null);
+    setDeleteModalVisible(false);
+  };
+
+  const handleFabPress = () => {
+    setNewListTitle(`Список ${shopLists.length + 1}`);
+    setCreateModalVisible(true);
+  };
+
+  const handleCreateConfirm = () => {
+    const title = newListTitle.trim() || `Список ${shopLists.length + 1}`;
+    const newListId = addShopList(title, 14);
+    setCreateModalVisible(false);
+    router.push({ pathname: "/shoplist-inside", params: { id: newListId } });
+  };
+
+  const handleCreateCancel = () => {
+    setCreateModalVisible(false);
   };
 
   const getFilteredLists = () => {
@@ -99,7 +140,7 @@ const App = () => {
             >
               <View style={styles.avatar}>
                 <View style={styles.avatarCircle} />
-                <Text style={styles.avatarText}>Persi</Text>
+                <Text style={styles.avatarText}>{user.username}</Text>
               </View>
             </TouchableOpacity>
 
@@ -147,7 +188,9 @@ const App = () => {
                           : shopList.title}
                       </Text>
                       {allPurchased && (
-                        <Ionicons name="checkmark" size={24} color="#4a6530" />
+                        <TouchableOpacity onPress={() => handleDeletePress(shopList.id)}>
+                          <Ionicons name="checkmark" size={24} color="#4a6530" />
+                        </TouchableOpacity>
                       )}
                     </View>
                     <View style={styles.itemsContainer}>
@@ -185,7 +228,9 @@ const App = () => {
                           : shopList.title}
                       </Text>
                       {allPurchased && (
-                        <Ionicons name="checkmark" size={24} color="#4a6530" />
+                        <TouchableOpacity onPress={() => handleDeletePress(shopList.id)}>
+                          <Ionicons name="checkmark" size={24} color="#4a6530" />
+                        </TouchableOpacity>
                       )}
                     </View>
                     <View style={styles.itemsContainer}>
@@ -206,10 +251,70 @@ const App = () => {
 
         <TouchableOpacity
           style={[styles.fab, { right: FAB_POSITION }]}
-          onPress={handleAddList}
+          onPress={handleFabPress}
         >
           <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>
+
+        <Modal
+          visible={deleteModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={handleCancelDelete}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={handleCancelDelete}
+          >
+            <View style={styles.modalContent}>
+              <Text style={styles.modalText}>Хотите удалить?</Text>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={styles.modalButton}
+                  onPress={handleConfirmDelete}
+                >
+                  <Text style={styles.modalButtonText}>Да</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.modalButton}
+                  onPress={handleCancelDelete}
+                >
+                  <Text style={styles.modalButtonText}>Нет</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+
+        <Modal
+          visible={createModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={handleCreateCancel}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={handleCreateCancel}
+          >
+            <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalText}>Название списка</Text>
+                <TextInput
+                  style={styles.createInput}
+                  value={newListTitle}
+                  onChangeText={setNewListTitle}
+                  placeholder="Список 1"
+                  placeholderTextColor="#aaa"
+                />
+                <TouchableOpacity onPress={handleCreateConfirm} style={styles.createArrow}>
+                  <Ionicons name="arrow-forward" size={24} color="#4a6530" />
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </Modal>
       </ImageBackground>
     </SafeAreaView>
   );
@@ -315,7 +420,7 @@ const styles = StyleSheet.create({
   },
   cardTitleRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
     marginBottom: 10,
   },
@@ -347,11 +452,71 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 3,
   },
-  fabText: {
+fabText: {
     fontSize: 70,
     color: "#fff",
-    fontWeight: "200",
+    fontWeight: 200,
     marginTop: -10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 15,
+    padding: 28,
+    width: 300,
+    alignItems: "center",
+  },
+  modalText: {
+    fontSize: 20,
+    color: "#4a6530",
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    gap: 20,
+  },
+  modalButton: {
+    backgroundColor: "#8faa4f",
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+  },
+  modalButtonText: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: 600,
+  },
+  createInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#c5d3a8",
+    borderRadius: 10,
+    marginBottom: 20,
+    overflow: "hidden",
+  },
+  createInput: {
+    backgroundColor: "#c5d3a8",
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    color: "#4a6530",
+    fontSize: 16,
+    width: "100%",
+    marginBottom: 20,
+  },
+  createArrow: {
+    alignSelf: "flex-end",
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+  },
+  cancelButton: {
+    backgroundColor: "#999",
   },
 });
 
