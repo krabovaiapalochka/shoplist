@@ -95,18 +95,16 @@ const App = () => {
   };
 
   const filteredLists = getFilteredLists();
-  // 1. Создаем функцию распределения
   const distributeData = (data: Array<ShopList>) => {
     const left: Array<ShopList> = [];
     const right: Array<ShopList> = [];
     let leftH = 0;
     let rightH = 0;
     data.forEach((item) => {
-      // Считаем примерный "вес" карточки
       const itemWeight = item.items.slice(0, maxItems).length;
       if (leftH <= rightH) {
         left.push(item);
-        leftH += itemWeight + 4; // +2 для учета заголовка и отступов
+        leftH += itemWeight + 4; 
       } else {
         right.push(item);
         rightH += itemWeight + 4;
@@ -303,13 +301,11 @@ const App = () => {
                 <Text style={styles.modalText}>Название списка</Text>
                 <TextInput
                   style={styles.createInput}
-                  value={newListTitle}
-                  onChangeText={setNewListTitle}
-                  placeholder="Список 1"
+                  placeholder={newListTitle}
                   placeholderTextColor="#aaa"
                 />
                 <TouchableOpacity onPress={handleCreateConfirm} style={styles.createArrow}>
-                  <Ionicons name="arrow-forward" size={24} color="#4a6530" />
+                  <Ionicons name="arrow-forward" size={28} color="#fff" />
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
@@ -511,9 +507,14 @@ fabText: {
     marginBottom: 20,
   },
   createArrow: {
+    backgroundColor: "#8faa4f",
+    borderRadius: 25,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
     alignSelf: "flex-end",
-    paddingVertical: 8,
-    paddingHorizontal: 15,
+    marginTop: 5,
   },
   cancelButton: {
     backgroundColor: "#999",

@@ -144,7 +144,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.exitButton}>
+        <TouchableOpacity style={styles.exitButton} onPress={() => router.push("/login")}>
           <Text style={styles.exitText}>Выйти</Text>
         </TouchableOpacity>
 

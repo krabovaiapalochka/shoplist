@@ -75,6 +75,7 @@ export default function NewPassword() {
             }
             
             console.log("Пароли совпадают, отправляем...");
+            router.push("/login");
           }}
         >
           <Text style={styles.buttonText}>→</Text>
