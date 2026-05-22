@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   FlatList,
   StyleSheet,
@@ -9,8 +9,10 @@ import {
   TouchableOpacity,
   View,
   ScrollView,
+  Animated,
 } from "react-native";
 import { useShopLists } from "./ShopListContext";
+import * as Clipboard from "expo-clipboard";
 
 const DATABASE = [
   "Апельсин",
@@ -63,12 +65,38 @@ export default function Index() {
   } = useShopLists();
 
   const shopList = id ? getShopList(id) : undefined;
+  const title = shopList?.title || "";
+  const searchTitle = title === "Заголовок" ? "Список 1" : title;
+  const items = shopList?.items || [];
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showShareModal, setShowShareModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showRecommendations, setShowRecommendations] = useState(false);
+  const slideAnim = useState(new Animated.Value(-300))[0];
+
+  useEffect(() => {
+    if (items.length > 0) {
+      setShowRecommendations(true);
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: -300,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setShowRecommendations(false));
+    }
+  }, [items.length]);
+
+  const recommendedItems = DATABASE.filter(
+    (product) => !items.some((item) => item.name === product),
+  );
 
   const handleDeleteList = () => {
     if (id) {
@@ -81,11 +109,11 @@ export default function Index() {
     router.push("/list-of-shoplists");
   };
 
-  const searchHeaderIconColor = "#8faa4f";
+  const handleCopyLink = async () => {
+    await Clipboard.setStringAsync(`shoplist.app/list/${id}`);
+  };
 
-  const title = shopList?.title || "";
-  const searchTitle = title === "Заголовок" ? "Список 1" : title;
-  const items = shopList?.items || [];
+  const searchHeaderIconColor = "#8faa4f";
 
   const filteredProducts = DATABASE.filter((item) =>
     item.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -292,6 +320,27 @@ export default function Index() {
         contentContainerStyle={styles.listContent}
       />
 
+      {showRecommendations && (
+        <Animated.View
+          style={[
+            styles.recommendationsContainer,
+            { transform: [{ translateX: slideAnim }] },
+          ]}
+        >
+          <Text style={styles.recommendationsTitle}>Рекомендации</Text>
+          {recommendedItems.slice(0, 5).map((product, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.recommendationItem}
+              onPress={() => handleAddItem(product)}
+            >
+              <Ionicons name="add" size={16} color="#4a6530" />
+              <Text style={styles.recommendationItemText}>{product}</Text>
+            </TouchableOpacity>
+          ))}
+        </Animated.View>
+      )}
+
       <TouchableOpacity style={styles.fab} onPress={() => setIsSearching(true)}>
         <Ionicons name="add" size={58} color="#fff" />
       </TouchableOpacity>
@@ -305,7 +354,7 @@ export default function Index() {
           <View style={styles.shareModalContainer}>
             <View style={styles.shareModalHeader}>
               <View style={styles.shareAppIcon}>
-                <Ionicons name="basket-outline" size={32} color="#fff" />
+                <Ionicons name="basket-outline" size={25} color="#fff" />
               </View>
               <Text style={styles.shareLink}>shoplist.app/list/{id}</Text>
               <TouchableOpacity onPress={() => setShowShareModal(false)}>
@@ -358,10 +407,10 @@ export default function Index() {
               </TouchableOpacity>
             </ScrollView>
 
-            <View style={styles.shareCopySection}>
+            <TouchableOpacity style={styles.shareCopySection} onPress={handleCopyLink}>
               <Text style={styles.shareCopyText}>Скопировать</Text>
               <Ionicons name="copy-outline" size={20} color="#666" />
-            </View>
+            </TouchableOpacity>
           </View>
         </View>
       )}
@@ -554,8 +603,8 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   shareAppIcon: {
-    width: 60,
-    height: 60,
+    width: 40,
+    height: 40,
     borderRadius: 15,
     backgroundColor: "#8faa4f",
     justifyContent: "center",
@@ -656,5 +705,40 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     minWidth: 20,
     textAlign: "center",
+  },
+  recommendationsContainer: {
+    position: "absolute",
+    left: 0,
+    bottom: 40,
+    backgroundColor: "#fff",
+    borderWidth: 2,
+    borderColor: "#4a6530",
+    borderLeftWidth: 0,
+    borderTopRightRadius: 12,
+    borderBottomRightRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    minWidth: 200,
+    shadowColor: "#000",
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  recommendationsTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#4a6530",
+    marginBottom: 8,
+  },
+  recommendationItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 4,
+  },
+  recommendationItemText: {
+    fontSize: 13,
+    color: "#4a6530",
+    marginLeft: 6,
   },
 });

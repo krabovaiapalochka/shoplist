@@ -230,11 +230,8 @@ const App = () => {
           <View style={{ height: 100 }} />
         </ScrollView>
 
-        <TouchableOpacity
-          style={[styles.fab, { right: FAB_POSITION }]}
-          onPress={handleFabPress}
-        >
-          <Text style={styles.fabText}>+</Text>
+        <TouchableOpacity style={styles.fab} onPress={handleFabPress}>
+          <Ionicons name="add" size={58} color="#fff" />
         </TouchableOpacity>
 
         <Modal
@@ -431,12 +428,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 3,
   },
-fabText: {
-    fontSize: 70,
-    color: "#fff",
-    fontWeight: 200,
-    marginTop: -10,
-  },
+
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
