@@ -21,24 +21,13 @@ const maxItems = 7;
 
 const App = () => {
   const router = useRouter();
-  const { shopLists, addShopList, addItemToList, deleteShopList } = useShopLists();
+  const { shopLists, addShopList, deleteShopList } = useShopLists();
   const { user } = useUser();
   const [searchText, setSearchText] = useState("");
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [shopListToDelete, setShopListToDelete] = useState<string | null>(null);
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [newListTitle, setNewListTitle] = useState("");
-
-  const [leftColHeight, setLeftColHeight] = useState(0);
-  const [rightColHeight, setRightColHeight] = useState(0);
-
-  const handleAddList = () => {
-    const newListId = addShopList(`Список ${shopLists.length + 1}`, 14);
-    router.push({ pathname: "/shoplist-inside", params: { id: newListId } });
-  };
-  const handleAddListDebug = () => {
-    const newListId = addShopList(`Список ${shopLists.length + 1}`, 14);
-  };
 
   const handleDeletePress = (id: string) => {
     setShopListToDelete(id);
@@ -95,9 +84,9 @@ const App = () => {
   };
 
   const filteredLists = getFilteredLists();
-  const distributeData = (data: Array<ShopList>) => {
-    const left: Array<ShopList> = [];
-    const right: Array<ShopList> = [];
+  const distributeData = (data: ShopList[]) => {
+    const left: ShopList[] = [];
+    const right: ShopList[] = [];
     let leftH = 0;
     let rightH = 0;
     data.forEach((item) => {
@@ -162,10 +151,7 @@ const App = () => {
           <Text style={styles.sectionTitle}>Списки покупок</Text>
 
           <View style={styles.masonryContainer}>
-            <View
-              style={styles.masonryColumn}
-              onLayout={(e) => setLeftColHeight(e.nativeEvent.layout.height)}
-            >
+            <View style={styles.masonryColumn}>
               {left.map((shopList) => {
                 const allPurchased = shopList.items.length > 0 && shopList.items.every((item: Item) => item.purchased);
                 return (
@@ -202,10 +188,7 @@ const App = () => {
                 );
               })}
             </View>
-            <View
-              style={styles.masonryColumn}
-              onLayout={(e) => setRightColHeight(e.nativeEvent.layout.height)}
-            >
+            <View style={styles.masonryColumn}>
               {right.map((shopList) => {
                 const allPurchased = shopList.items.length > 0 && shopList.items.every((item: Item) => item.purchased);
                 return (

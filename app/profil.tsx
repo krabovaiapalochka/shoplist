@@ -16,7 +16,7 @@ import { useUser } from "./UserContext";
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, setUsername, setPhone, setEmail, setBirthday, setAvatarUri } = useUser();
+  const { user, setUsername, setPhone, setEmail, setBirthday } = useUser();
   const [isEditing, setIsEditing] = useState(false);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
   const [photoModalVisible, setPhotoModalVisible] = useState(false);

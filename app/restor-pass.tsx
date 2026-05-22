@@ -29,7 +29,7 @@ export default function RestorPass() {
             placeholderTextColor="#fff"
             value={email}
             onChangeText={setEmail}
-            secureTextEntry={true}
+            secureTextEntry={false}
             autoCapitalize="none"
           />
           <Ionicons name="person-outline" size={22} color="#fff" style={styles.usernameIcon} />

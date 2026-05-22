@@ -62,26 +62,19 @@ export const ShopListProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const addItemToList = (listId: string, itemName: string) => {
-    getShopList(listId)?.items.push({
-      id: Date.now().toString(),
-      name: itemName,
-      purchased: false,
-      quantity: 1,
-    });
-    // TODO: use setShopList but with React.memo
-    // setShopLists(
-    //   shopLists.map((list) =>
-    //     list.id === listId
-    //       ? {
-    //           ...list,
-    //           items: [
-    //             ...list.items,
-    //             { id: Date.now().toString(), name: itemName, purchased: false },
-    //           ],
-    //         }
-    //       : list,
-    //   ),
-    // );
+    setShopLists(
+      shopLists.map((list) =>
+        list.id === listId
+          ? {
+              ...list,
+              items: [
+                ...list.items,
+                { id: Date.now().toString(), name: itemName, purchased: false, quantity: 1 },
+              ],
+            }
+          : list,
+      ),
+    );
   };
 
   const removeItemFromList = (listId: string, itemId: string) => {

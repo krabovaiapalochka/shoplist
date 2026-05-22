@@ -10,10 +10,6 @@ export default function Registration() {
   const router = useRouter();
   
   const handleLogin = () => {
-    router.push("/list-of-shoplists");
-  };
-
-  const handleRegistration = () => {
     router.push("/registration-first");
   };
   

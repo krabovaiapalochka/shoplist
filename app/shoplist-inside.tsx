@@ -82,7 +82,6 @@ export default function Index() {
   };
 
   const searchHeaderIconColor = "#8faa4f";
-  const searchHeaderTextColor = "#8faa4f";
 
   const title = shopList?.title || "";
   const searchTitle = title === "Заголовок" ? "Список 1" : title;
