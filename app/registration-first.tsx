@@ -1,16 +1,37 @@
 import { useState } from "react";
-import { Text, View, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from "react-native";
+import { Text, View, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Alert, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useUser } from "./_UserContext";
 
 export default function Registration() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
-  
-  const handleLogin = () => {
-    router.push("/registration-first");
+  const { register } = useUser();
+
+  const handleRegister = async () => {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert("Ошибка", "Заполните все поля");
+      return;
+    }
+    // if (password.length < 6) {
+    //   Alert.alert("Ошибка", "Пароль должен быть не менее 6 символов");
+    //   return;
+    // }
+
+    try {
+      await register(email.trim(), email.trim(), password);
+      router.replace("/list-of-shoplists");
+    } catch (e: any) {
+      console.error("[REGISTER ERROR]", e.response?.status, JSON.stringify(e.response?.data), e.message);
+      const message = e.response?.data?.detail || "Ошибка регистрации";
+      Alert.alert("Ошибка", message);
+    } finally {
+      setLoading(false);
+    }
   };
   
   return (
@@ -25,10 +46,12 @@ export default function Registration() {
         <View style={styles.emailInputContainer}>
           <TextInput
             style={styles.input}
-            placeholder="Почта\номер тел."
+            placeholder="Email"
             placeholderTextColor="#fff"
-            value={username}
-            onChangeText={setUsername}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
           />
           <Ionicons name="person-outline" size={22} color="#fff" style={styles.usernameIcon} />
         </View>
@@ -52,8 +75,12 @@ export default function Registration() {
           </TouchableOpacity>
         </View>
         
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>→</Text>
+        <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
+          {loading ? (
+            <ActivityIndicator size="large" color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>→</Text>
+          )}
         </TouchableOpacity>
       </View>
     </ImageBackground>

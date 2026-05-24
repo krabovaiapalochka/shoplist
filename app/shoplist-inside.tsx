@@ -10,46 +10,10 @@ import {
   View,
   ScrollView,
   Animated,
+  Modal,
 } from "react-native";
-import { useShopLists } from "./ShopListContext";
+import { useShopLists } from "./_ShopListContext";
 import * as Clipboard from "expo-clipboard";
-
-const DATABASE = [
-  "Апельсин",
-  "Бананы",
-  "Батон",
-  "Булочки",
-  "Гречка",
-  "Йогурт",
-  "Картофель",
-  "Кефир",
-  "Колбаса варёная",
-  "Кофе",
-  "Куриное филе",
-  "Лук репчатый",
-  "Макароны",
-  "Мандарин",
-  "Масло сливочное",
-  "Морковь",
-  "Мука",
-  "Молоко",
-  "Пельмени",
-  "Подсолнечное масло",
-  "Рис",
-  "Сахар",
-  "Сметана",
-  "Соль",
-  "Сосиски",
-  "Сыр твёрдый",
-  "Творог",
-  "Фарш мясной",
-  "Хлеб белый",
-  "Хлеб тостовый",
-  "Хлеб чёрный",
-  "Чай чёрный",
-  "Яблоки",
-  "Яйца",
-];
 
 export default function Index() {
   const router = useRouter();
@@ -75,6 +39,7 @@ export default function Index() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showRecommendations, setShowRecommendations] = useState(false);
+  const [addModalVisible, setAddModalVisible] = useState(false);
   const slideAnim = useState(new Animated.Value(-300))[0];
 
   useEffect(() => {
@@ -94,10 +59,6 @@ export default function Index() {
     }
   }, [items.length]);
 
-  const recommendedItems = DATABASE.filter(
-    (product) => !items.some((item) => item.name === product),
-  );
-
   const handleDeleteList = () => {
     if (id) {
       deleteShopList(id);
@@ -115,10 +76,6 @@ export default function Index() {
 
   const searchHeaderIconColor = "#8faa4f";
 
-  const filteredProducts = DATABASE.filter((item) =>
-    item.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-
   const handleTitleChange = (newTitle: string) => {
     if (id) {
       updateShopListTitle(id, newTitle);
@@ -128,9 +85,23 @@ export default function Index() {
   const handleAddItem = (productName: string) => {
     if (id) {
       addItemToList(id, productName);
-      setSearchQuery("");
-      setIsSearching(false);
     }
+  };
+
+  const handleOpenAddModal = () => {
+    setAddModalVisible(true);
+  };
+
+  const handleConfirmAdd = () => {
+    if (id && searchQuery.trim()) {
+      addItemToList(id, searchQuery.trim());
+      setAddModalVisible(false);
+      setSearchQuery("");
+    }
+  };
+
+  const handleCloseAddModal = () => {
+    setAddModalVisible(false);
   };
 
   const handleRemoveItem = (itemId: string) => {
@@ -180,32 +151,64 @@ export default function Index() {
             <TextInput
               style={styles.searchInput}
               placeholder="Поиск"
-              placeholderTextColor="#323e2f" //цвет поменять
+              placeholderTextColor="#323e2f"
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoFocus
             />
             {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery("")}>
-                <Ionicons name="close-circle" size={20} color="#fff" />
+              <TouchableOpacity onPress={() => setSearchQuery("")} style={styles.clearButton}>
+                <Ionicons name="close-circle" size={20} color="#4a6530" />
               </TouchableOpacity>
             )}
           </View>
 
-          <FlatList
-            data={filteredProducts}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.searchResultItem}
-                onPress={() => handleAddItem(item)}
-              >
-                <Text style={styles.searchResultText}>{item}</Text>
+          {searchQuery.length > 0 ? (
+            <View style={styles.searchResultsList}>
+              <Text style={styles.searchEmptyText}>Ничего не найдено</Text>
+              <TouchableOpacity style={styles.addItemButton} onPress={handleOpenAddModal}>
+                <Text style={styles.addItemButtonText}>Добавить товар</Text>
               </TouchableOpacity>
-            )}
-            style={styles.searchResultsList}
-          />
+            </View>
+          ) : (
+            <View style={styles.searchResultsList}>
+              {items.length === 0 ? (
+                <Text style={styles.searchEmptyText}>Введите название товара</Text>
+              ) : (
+                items.map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={styles.historyItem}
+                    onPress={() => handleAddItem(item.name)}
+                  >
+                    <Ionicons name="time-outline" size={20} color="#fff" />
+                    <Text style={styles.historyItemText}>{item.name}</Text>
+                  </TouchableOpacity>
+                ))
+              )}
+            </View>
+          )}
         </View>
+
+        <Modal
+          visible={addModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={handleCloseAddModal}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={handleCloseAddModal}
+          >
+            <View style={styles.addModalContent}>
+              <Text style={styles.addModalTitle}>{searchQuery}</Text>
+              <TouchableOpacity style={styles.addModalButton} onPress={handleConfirmAdd}>
+                <Text style={styles.addModalButtonText}>Добавить</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </Modal>
       </View>
     );
   }
@@ -328,16 +331,6 @@ export default function Index() {
           ]}
         >
           <Text style={styles.recommendationsTitle}>Рекомендации</Text>
-          {recommendedItems.slice(0, 5).map((product, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.recommendationItem}
-              onPress={() => handleAddItem(product)}
-            >
-              <Ionicons name="add" size={16} color="#4a6530" />
-              <Text style={styles.recommendationItemText}>{product}</Text>
-            </TouchableOpacity>
-          ))}
         </Animated.View>
       )}
 
@@ -553,23 +546,79 @@ const styles = StyleSheet.create({
     color: "#000",
     marginLeft: 10,
   },
+  clearButton: {
+    marginLeft: 5,
+  },
   searchResultsList: {
-    backgroundColor: "#c5d3a8",
+    backgroundColor: "#8faa4f",
     borderRadius: 20,
     padding: 5,
   },
-  searchResultItem: {
+  searchEmptyText: {
+    color: "#fff",
+    fontSize: 16,
+    textAlign: "center",
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  addItemButton: {
+    borderWidth: 1,
+    borderColor: "#fff",
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+    alignSelf: "center",
+    marginTop: 5,
+    marginBottom: 20,
+  },
+  addItemButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  historyItem: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: "#c5d3a8",
+    borderBottomColor: "rgba(255,255,255,0.3)",
   },
-  searchResultText: {
+  historyItemText: {
+    color: "#fff",
     fontSize: 16,
+    marginLeft: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addModalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 30,
+    width: 300,
+    alignItems: "center",
+  },
+  addModalTitle: {
+    fontSize: 20,
+    color: "#4a6530",
+    marginBottom: 25,
     fontWeight: "600",
-    color: "#2c4829",
+    textAlign: "center",
+  },
+  addModalButton: {
+    backgroundColor: "#8faa4f",
+    paddingVertical: 12,
+    paddingHorizontal: 50,
+    borderRadius: 25,
+  },
+  addModalButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
   },
   shareModalOverlay: {
     position: "absolute",
@@ -730,15 +779,5 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#4a6530",
     marginBottom: 8,
-  },
-  recommendationItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 4,
-  },
-  recommendationItemText: {
-    fontSize: 13,
-    color: "#4a6530",
-    marginLeft: 6,
   },
 });

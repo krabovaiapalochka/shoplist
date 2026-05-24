@@ -13,8 +13,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Item, ShopList, useShopLists } from "./ShopListContext";
-import { useUser } from "./UserContext";
+import { Item, ShopList, useShopLists } from "./_ShopListContext";
+import { useUser } from "./_UserContext";
 
 const FAB_POSITION = 35;
 const maxItems = 7;
@@ -83,6 +83,7 @@ const App = () => {
     });
   };
 
+
   const filteredLists = getFilteredLists();
   const distributeData = (data: ShopList[]) => {
     const left: ShopList[] = [];
@@ -127,7 +128,7 @@ const App = () => {
             >
               <View style={styles.avatar}>
                 <View style={styles.avatarCircle} />
-                <Text style={styles.avatarText}>{user.username}</Text>
+                <Text style={styles.avatarText}>{user?.username ?? "User"}</Text>
               </View>
             </TouchableOpacity>
 

@@ -1,16 +1,33 @@
 import { useState } from "react";
-import { Text, View, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from "react-native";
+import { Text, View, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Alert, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useUser } from "./_UserContext";
 
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
-  
-  const handleLogin = () => {
-    router.push("/list-of-shoplists");
+  const { login } = useUser();
+
+  const handleLogin = async () => {
+    if (!username.trim() || !password.trim()) {
+      Alert.alert("Ошибка", "Заполните все поля");
+      return;
+    }
+    setLoading(true);
+    try {
+      await login(username.trim(), password);
+      router.replace("/list-of-shoplists");
+    } catch (e: any) {
+      console.error("[LOGIN ERROR]", e.response?.status, JSON.stringify(e.response?.data), e.message);
+      const message = e.response?.data?.detail || "Ошибка входа";
+      Alert.alert("Ошибка", message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRegistration = () => {
@@ -33,10 +50,12 @@ export default function Login() {
         <View style={styles.usernameInputContainer}>
           <TextInput
             style={styles.input}
-            placeholder="Имя пользователя"
+            placeholder="Email"
             placeholderTextColor="#fff"
             value={username}
             onChangeText={setUsername}
+            keyboardType="email-address"
+            autoCapitalize="none"
           />
           <Ionicons name="person-outline" size={22} color="#fff" style={styles.usernameIcon} />
         </View>
@@ -69,8 +88,12 @@ export default function Login() {
           <Text style={styles.linkRegistration}>Регистрация</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>→</Text>
+        <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+          {loading ? (
+            <ActivityIndicator size="large" color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>→</Text>
+          )}
         </TouchableOpacity>
       </View>
     </ImageBackground>

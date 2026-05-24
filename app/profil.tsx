@@ -1,26 +1,46 @@
-import React, { useState } from "react";
-import { 
-  View, 
-  Text, 
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
   TextInput,
-  StyleSheet, 
-  TouchableOpacity, 
+  StyleSheet,
+  TouchableOpacity,
   SafeAreaView,
   StatusBar,
   ImageBackground,
-  Modal
+  Modal,
+  Alert,
+  ActivityIndicator,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useUser } from "./UserContext";
+import * as ImagePicker from "expo-image-picker";
+import { useUser } from "./_UserContext";
+import { API_BASE_URL } from "./_api";
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, setUsername, setPhone, setEmail, setBirthday } = useUser();
+  const { user, updateProfile, uploadAvatar, deleteAvatar, logout } = useUser();
+
+  const [username, setUsername] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setUsername(user.username ?? "");
+      setPhone(user.phone ?? "");
+      setEmail(user.email ?? "");
+      setBirthDate(user.birth_date ?? "");
+    }
+  }, [user]);
 
   const handleAvatarPress = () => {
     setShowAvatarMenu(!showAvatarMenu);
@@ -36,22 +56,99 @@ export default function ProfileScreen() {
     setDeleteModalVisible(true);
   };
 
-  const handleConfirmDeletePhoto = () => {
+  const handleConfirmDeletePhoto = async () => {
     setDeleteModalVisible(false);
+    try {
+      await deleteAvatar();
+    } catch {
+      Alert.alert("Ошибка", "Не удалось удалить фото");
+    }
   };
 
-  const handleSelectFromGallery = () => {
+  const handleSelectFromGallery = async () => {
     setPhotoModalVisible(false);
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Ошибка", "Нет доступа к галерее");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) {
+      try {
+        await uploadAvatar(result.assets[0].uri);
+      } catch {
+        Alert.alert("Ошибка", "Не удалось загрузить фото");
+      }
+    }
   };
 
-  const handleTakePhoto = () => {
+  const handleTakePhoto = async () => {
     setPhotoModalVisible(false);
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Ошибка", "Нет доступа к камере");
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) {
+      try {
+        await uploadAvatar(result.assets[0].uri);
+      } catch {
+        Alert.alert("Ошибка", "Не удалось загрузить фото");
+      }
+    }
   };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await updateProfile({
+        username: username.trim() || undefined,
+        phone: phone.trim() || null,
+        email: email.trim() || undefined,
+        birth_date: birthDate.trim() || null,
+      });
+      setIsEditing(false);
+    } catch (e: any) {
+      const message = e.response?.data?.detail || "Ошибка сохранения";
+      Alert.alert("Ошибка", message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace("/login");
+  };
+
+  const avatarSource = user?.avatar_url
+    ? user.avatar_url.startsWith("http")
+      ? user.avatar_url
+      : `${API_BASE_URL}${user.avatar_url}`
+    : null;
+
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator size="large" color="#8faa4f" style={{ marginTop: 300 }} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#d8e0cc" />
-      
+
       <ImageBackground
         source={require("../assets/images/fon-background.png")}
         style={styles.background}
@@ -64,32 +161,46 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         <View style={styles.card}>
-          <TouchableOpacity style={styles.editButton} onPress={() => setIsEditing(!isEditing)}>
-            <Ionicons name={isEditing ? "checkmark" : "create-outline"} size={24} color="#5a7a3a" />
-          </TouchableOpacity>
+          {isEditing ? (
+            <TouchableOpacity style={styles.editButton} onPress={handleSave} disabled={saving}>
+              {saving ? (
+                <ActivityIndicator size="small" color="#5a7a3a" />
+              ) : (
+                <Ionicons name="checkmark" size={24} color="#5a7a3a" />
+              )}
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.editButton} onPress={() => setIsEditing(true)}>
+              <Ionicons name="create-outline" size={24} color="#5a7a3a" />
+            </TouchableOpacity>
+          )}
 
           <View style={styles.avatarContainer}>
             <TouchableOpacity style={styles.avatar} onPress={handleAvatarPress} activeOpacity={0.7}>
-              <Ionicons name="person-outline" size={50} color="#fff" />
+              {avatarSource ? (
+                <Image source={{ uri: avatarSource }} style={styles.avatarImage} />
+              ) : (
+                <Ionicons name="person-outline" size={50} color="#fff" />
+              )}
               <View style={styles.cameraIcon}>
                 <Ionicons name="camera" size={20} color="#fff" />
               </View>
             </TouchableOpacity>
-            
+
             {showAvatarMenu && (
               <View style={styles.menuContainer}>
-                <TouchableOpacity 
-                  style={styles.menuItem} 
+                <TouchableOpacity
+                  style={styles.menuItem}
                   onPress={handleChangePhoto}
                 >
                   <Text style={styles.menuItemText}>Изменить фото</Text>
                   <Ionicons name="create-outline" size={20} color="#5a7a3a" />
                 </TouchableOpacity>
-                
+
                 <View style={styles.menuDivider} />
-                
-                <TouchableOpacity 
-                  style={styles.menuItem} 
+
+                <TouchableOpacity
+                  style={styles.menuItem}
                   onPress={handleDeletePhoto}
                 >
                   <Text style={[styles.menuItemText, styles.deleteText]}>Удалить фото</Text>
@@ -102,7 +213,7 @@ export default function ProfileScreen() {
           {isEditing ? (
             <TextInput
               style={styles.usernameInput}
-              value={user.username}
+              value={username}
               onChangeText={setUsername}
               placeholder="username"
               placeholderTextColor="rgba(90, 122, 58, 0.5)"
@@ -119,32 +230,35 @@ export default function ProfileScreen() {
               style={styles.inputField}
               placeholder="Номер тел."
               placeholderTextColor="#4a6530"
-              value={user.phone}
+              value={phone}
               onChangeText={setPhone}
               keyboardType="phone-pad"
+              editable={isEditing}
             />
-            
+
             <TextInput
               style={styles.inputField}
               placeholder="Эл.почта"
               placeholderTextColor="#4a6530"
-              value={user.email}
+              value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
+              editable={isEditing}
             />
 
             <TextInput
               style={styles.inputField}
               placeholder="Дата рожд."
               placeholderTextColor="#4a6530"
-              value={user.birthday}
-              onChangeText={setBirthday}
+              value={birthDate}
+              onChangeText={setBirthDate}
+              editable={isEditing}
             />
           </View>
         </View>
 
-        <TouchableOpacity style={styles.exitButton} onPress={() => router.push("/login")}>
+        <TouchableOpacity style={styles.exitButton} onPress={handleLogout}>
           <Text style={styles.exitText}>Выйти</Text>
         </TouchableOpacity>
 
@@ -161,7 +275,7 @@ export default function ProfileScreen() {
           >
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Изменить фото</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.photoModalButton}
                 onPress={handleSelectFromGallery}
               >
@@ -169,14 +283,14 @@ export default function ProfileScreen() {
                 <Text style={styles.photoModalButtonText}>Выбрать из галереи</Text>
               </TouchableOpacity>
               <View style={styles.buttonDivider} />
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.photoModalButton}
                 onPress={handleTakePhoto}
               >
                 <Ionicons name="camera-outline" size={22} color="#4a6530" />
                 <Text style={styles.photoModalButtonText}>Сделать фото</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.cancelButtonCenter}
                 onPress={() => setPhotoModalVisible(false)}
               >
@@ -201,13 +315,13 @@ export default function ProfileScreen() {
               <Text style={styles.modalTitle}>Удалить фото</Text>
               <Text style={styles.modalSubtitle}>Вы уверены, что хотите удалить фото?</Text>
               <View style={styles.deleteButtonsRow}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.deleteModalButton}
                   onPress={handleConfirmDeletePhoto}
                 >
                   <Text style={styles.deleteModalButtonText}>Удалить</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.deleteModalCancelButton}
                   onPress={() => setDeleteModalVisible(false)}
                 >
@@ -217,9 +331,7 @@ export default function ProfileScreen() {
             </View>
           </TouchableOpacity>
         </Modal>
-
-        {/* Меню аватара - теперь отображается под аватаром */}
-        </ImageBackground>
+      </ImageBackground>
     </SafeAreaView>
   );
 }
@@ -238,12 +350,12 @@ const styles = StyleSheet.create({
   },
   greenRectangle: {
     position: "absolute",
-    top: 0,              
+    top: 0,
     left: 0,
-    right: 0, 
-    height: "40%",       
-    backgroundColor: "#8faa4f", 
-    zIndex: 1,            
+    right: 0,
+    height: "40%",
+    backgroundColor: "#8faa4f",
+    zIndex: 1,
   },
   backButton: {
     position: "absolute",
@@ -289,6 +401,12 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     borderColor: "#f0f3d6",
     position: "relative",
+    overflow: "hidden",
+  },
+  avatarImage: {
+    width: 160,
+    height: 160,
+    borderRadius: 90,
   },
   cameraIcon: {
     position: "absolute",
@@ -421,32 +539,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     marginBottom: 20,
-    textAlign: "center",
-  },
-  modalButton: {
-    backgroundColor: "#4a6530",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 10,
-    width: "100%",
-    marginBottom: 10,
-  },
-  modalButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: 600,
-    textAlign: "center",
-  },
-  modalCancelButton: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#4a6530",
-    marginTop: 5,
-  },
-  modalCancelButtonText: {
-    color: "#4a6530",
-    fontSize: 16,
-    fontWeight: 600,
     textAlign: "center",
   },
   photoModalButton: {
