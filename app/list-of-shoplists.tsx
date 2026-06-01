@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   ImageBackground,
   Modal,
   SafeAreaView,
@@ -21,22 +22,22 @@ const maxItems = 7;
 
 const App = () => {
   const router = useRouter();
-  const { shopLists, addShopList, deleteShopList } = useShopLists();
+  const { shopLists, addShopList, deleteShopList, isLoading } = useShopLists();
   const { user } = useUser();
   const [searchText, setSearchText] = useState("");
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [shopListToDelete, setShopListToDelete] = useState<string | null>(null);
+  const [shopListToDelete, setShopListToDelete] = useState<number | null>(null);
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [newListTitle, setNewListTitle] = useState("");
 
-  const handleDeletePress = (id: string) => {
+  const handleDeletePress = (id: number) => {
     setShopListToDelete(id);
     setDeleteModalVisible(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (shopListToDelete) {
-      deleteShopList(shopListToDelete);
+      await deleteShopList(shopListToDelete);
       setShopListToDelete(null);
       setDeleteModalVisible(false);
     }
@@ -52,11 +53,11 @@ const App = () => {
     setCreateModalVisible(true);
   };
 
-  const handleCreateConfirm = () => {
+  const handleCreateConfirm = async () => {
     const title = newListTitle.trim() || `Список ${shopLists.length + 1}`;
-    const newListId = addShopList(title, 14);
+    const newListId = await addShopList(title);
     setCreateModalVisible(false);
-    router.push({ pathname: "/shoplist-inside", params: { id: newListId } });
+    router.push({ pathname: "/shoplist-inside", params: { id: String(newListId) } });
   };
 
   const handleCreateCancel = () => {
@@ -83,7 +84,6 @@ const App = () => {
     });
   };
 
-
   const filteredLists = getFilteredLists();
   const distributeData = (data: ShopList[]) => {
     const left: ShopList[] = [];
@@ -94,7 +94,7 @@ const App = () => {
       const itemWeight = item.items.slice(0, maxItems).length;
       if (leftH <= rightH) {
         left.push(item);
-        leftH += itemWeight + 4; 
+        leftH += itemWeight + 4;
       } else {
         right.push(item);
         rightH += itemWeight + 4;
@@ -105,8 +105,17 @@ const App = () => {
     return { left, right };
   };
 
-  // 2. В компоненте
   const { left, right } = distributeData(filteredLists);
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <ActivityIndicator size="large" color="#8faa4f" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -154,7 +163,7 @@ const App = () => {
           <View style={styles.masonryContainer}>
             <View style={styles.masonryColumn}>
               {left.map((shopList) => {
-                const allPurchased = shopList.items.length > 0 && shopList.items.every((item: Item) => item.purchased);
+                const allPurchased = shopList.items.length > 0 && shopList.items.every((item: Item) => item.isCompleted);
                 return (
                   <TouchableOpacity
                     key={shopList.id}
@@ -162,7 +171,7 @@ const App = () => {
                     onPress={() =>
                       router.push({
                         pathname: "/shoplist-inside",
-                        params: { id: shopList.id },
+                        params: { id: String(shopList.id) },
                       })
                     }
                   >
@@ -180,7 +189,7 @@ const App = () => {
                     </View>
                     <View style={styles.itemsContainer}>
                       {shopList.items.slice(0, maxItems).map((item: Item) => (
-                        <Text style={[styles.itemText, item.purchased && styles.itemTextPurchased]} key={item.id}>
+                        <Text style={[styles.itemText, item.isCompleted && styles.itemTextPurchased]} key={item.id}>
                           {item.name}
                         </Text>
                       ))}
@@ -191,7 +200,7 @@ const App = () => {
             </View>
             <View style={styles.masonryColumn}>
               {right.map((shopList) => {
-                const allPurchased = shopList.items.length > 0 && shopList.items.every((item: Item) => item.purchased);
+                const allPurchased = shopList.items.length > 0 && shopList.items.every((item: Item) => item.isCompleted);
                 return (
                   <TouchableOpacity
                     key={shopList.id}
@@ -199,7 +208,7 @@ const App = () => {
                     onPress={() =>
                       router.push({
                         pathname: "/shoplist-inside",
-                        params: { id: shopList.id },
+                        params: { id: String(shopList.id) },
                       })
                     }
                   >
@@ -217,7 +226,7 @@ const App = () => {
                     </View>
                     <View style={styles.itemsContainer}>
                       {shopList.items.slice(0, maxItems).map((item: Item) => (
-                        <Text style={[styles.itemText, item.purchased && styles.itemTextPurchased]} key={item.id}>
+                        <Text style={[styles.itemText, item.isCompleted && styles.itemTextPurchased]} key={item.id}>
                           {item.name}
                         </Text>
                       ))}
@@ -284,6 +293,8 @@ const App = () => {
                   style={styles.createInput}
                   placeholder={newListTitle}
                   placeholderTextColor="#aaa"
+                  value={newListTitle}
+                  onChangeText={setNewListTitle}
                 />
                 <TouchableOpacity onPress={handleCreateConfirm} style={styles.createArrow}>
                   <Ionicons name="arrow-forward" size={28} color="#fff" />

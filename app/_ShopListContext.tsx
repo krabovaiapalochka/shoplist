@@ -1,113 +1,163 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { shoplistsApi, ListItemResponse, ShoppingListResponse } from "./_shoplists-api";
 
 export interface Item {
-  id: string;
+  id: number;
+  listId: number;
   name: string;
-  purchased: boolean;
   quantity: number;
+  unit?: string | null;
+  isCompleted: boolean;
+  position: number;
+  createdAt: string;
 }
 
 export interface ShopList {
-  id: string;
+  id: number;
   title: string;
+  description?: string | null;
+  ownerId: number;
+  isArchived: boolean;
+  createdAt: string;
+  updatedAt?: string | null;
   items: Item[];
-  minHeight: number;
+}
+
+function toItem(res: ListItemResponse): Item {
+  return {
+    id: res.id,
+    listId: res.list_id,
+    name: res.name,
+    quantity: res.quantity,
+    unit: res.unit,
+    isCompleted: res.is_completed,
+    position: res.position,
+    createdAt: res.created_at,
+  };
+}
+
+function toShopList(res: ShoppingListResponse): ShopList {
+  return {
+    id: res.id,
+    title: res.title,
+    description: res.description,
+    ownerId: res.owner_id,
+    isArchived: res.is_archived,
+    createdAt: res.created_at,
+    updatedAt: res.updated_at,
+    items: (res.items ?? []).map(toItem),
+  };
 }
 
 interface ShopListContextType {
   shopLists: ShopList[];
-  addShopList: (title: string, minHeight: number) => string;
-  updateShopListTitle: (id: string, title: string) => void;
-  addItemToList: (listId: string, itemName: string) => void;
-  removeItemFromList: (listId: string, itemId: string) => void;
-  toggleItemPurchased: (listId: string, itemId: string) => void;
-  updateItemQuantity: (listId: string, itemId: string, quantity: number) => void;
-  deleteShopList: (id: string) => void;
-  getShopList: (id: string) => ShopList | undefined;
+  isLoading: boolean;
+  addShopList: (title: string, description?: string | null) => Promise<number>;
+  updateShopListTitle: (id: number, title: string) => Promise<void>;
+  addItemToList: (listId: number, itemName: string) => Promise<void>;
+  removeItemFromList: (listId: number, itemId: number) => Promise<void>;
+  toggleItemPurchased: (listId: number, itemId: number) => Promise<void>;
+  updateItemQuantity: (listId: number, itemId: number, quantity: number) => Promise<void>;
+  deleteShopList: (id: number) => Promise<void>;
+  getShopList: (id: number) => ShopList | undefined;
+  fetchShopListById: (id: number) => Promise<ShopList | undefined>;
 }
 
-const ShopListContext = createContext<ShopListContextType | undefined>(
-  undefined,
-);
+const ShopListContext = createContext<ShopListContextType | undefined>(undefined);
 
 export const ShopListProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [shopLists, setShopLists] = useState<ShopList[]>([
-    {
-      id: "1",
-      title: "Список 1",
-      items: [
-        { id: "1", name: "Молоко", purchased: false, quantity: 1 },
-        { id: "2", name: "Хлеб", purchased: true, quantity: 1 },
-        { id: "3", name: "Яйца", purchased: false, quantity: 1 },
-      ],
-      minHeight: 150,
-    },
-  ]);
+  const [shopLists, setShopLists] = useState<ShopList[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const addShopList = (title: string, minHeight: number = 150) => {
-    const newId = Date.now().toString();
-    setShopLists([
-      ...shopLists,
-      { id: newId, title, items: [], minHeight: minHeight },
-    ]);
-    return newId;
-  };
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await shoplistsApi.getAll();
+        setShopLists(data.map(toShopList));
+      } catch (e) {
+        console.error("Failed to load shop lists", e);
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, []);
 
-  const updateShopListTitle = (id: string, title: string) => {
-    setShopLists(
-      shopLists.map((list) => (list.id === id ? { ...list, title } : list)),
+  const getShopList = useCallback(
+    (id: number) => shopLists.find((list) => list.id === id),
+    [shopLists],
+  );
+
+  const addShopList = useCallback(async (title: string, description?: string | null) => {
+    const res = await shoplistsApi.create({ title, description });
+    const list = toShopList(res);
+    setShopLists((prev) => [...prev, list]);
+    return list.id;
+  }, []);
+
+  const updateShopListTitle = useCallback(async (id: number, title: string) => {
+    await shoplistsApi.update(id, { title });
+    setShopLists((prev) =>
+      prev.map((list) => (list.id === id ? { ...list, title } : list)),
     );
-  };
+  }, []);
 
-  const addItemToList = (listId: string, itemName: string) => {
-    setShopLists(
-      shopLists.map((list) =>
-        list.id === listId
-          ? {
-              ...list,
-              items: [
-                ...list.items,
-                { id: Date.now().toString(), name: itemName, purchased: false, quantity: 1 },
-              ],
-            }
-          : list,
+  const deleteShopList = useCallback(async (id: number) => {
+    await shoplistsApi.delete(id);
+    setShopLists((prev) => prev.filter((list) => list.id !== id));
+  }, []);
+
+  const addItemToList = useCallback(async (listId: number, itemName: string) => {
+    const res = await shoplistsApi.addItem(listId, { name: itemName, quantity: 1 });
+    const item = toItem(res);
+    setShopLists((prev) =>
+      prev.map((list) =>
+        list.id === listId ? { ...list, items: [...list.items, item] } : list,
       ),
     );
-  };
+  }, []);
 
-  const removeItemFromList = (listId: string, itemId: string) => {
-    setShopLists(
-      shopLists.map((list) =>
+  const removeItemFromList = useCallback(async (listId: number, itemId: number) => {
+    try {
+      await shoplistsApi.deleteItem(itemId);
+    } catch {
+      // item may already be deleted on backend
+    }
+    setShopLists((prev) =>
+      prev.map((list) =>
         list.id === listId
           ? { ...list, items: list.items.filter((item) => item.id !== itemId) }
           : list,
       ),
     );
-  };
+  }, []);
 
-  const toggleItemPurchased = (listId: string, itemId: string) => {
-    setShopLists(
-      shopLists.map((list) =>
+  const toggleItemPurchased = useCallback(async (listId: number, itemId: number) => {
+    const list = shopLists.find((l) => l.id === listId);
+    const item = list?.items.find((i) => i.id === itemId);
+    if (!item) return;
+    const newStatus = !item.isCompleted;
+    await shoplistsApi.updateItem(itemId, { is_completed: newStatus });
+    setShopLists((prev) =>
+      prev.map((list) =>
         list.id === listId
           ? {
               ...list,
-              items: list.items.map((item) =>
-                item.id === itemId
-                  ? { ...item, purchased: !item.purchased }
-                  : item,
+              items: list.items.map((i) =>
+                i.id === itemId ? { ...i, isCompleted: newStatus } : i,
               ),
             }
           : list,
       ),
     );
-  };
+  }, [shopLists]);
 
-  const updateItemQuantity = (listId: string, itemId: string, quantity: number) => {
+  const updateItemQuantity = useCallback(async (listId: number, itemId: number, quantity: number) => {
     const validQuantity = Math.min(20, Math.max(1, quantity));
-    setShopLists(
-      shopLists.map((list) =>
+    await shoplistsApi.updateItem(itemId, { quantity: validQuantity });
+    setShopLists((prev) =>
+      prev.map((list) =>
         list.id === listId
           ? {
               ...list,
@@ -120,18 +170,27 @@ export const ShopListProvider: React.FC<{ children: React.ReactNode }> = ({
           : list,
       ),
     );
-  };
+  }, []);
 
-  const getShopList = (id: string) => shopLists.find((list) => list.id === id);
-
-  const deleteShopList = (id: string) => {
-    setShopLists(shopLists.filter((list) => list.id !== id));
-  };
+  const fetchShopListById = useCallback(async (id: number) => {
+    try {
+      const res = await shoplistsApi.getById(id);
+      const list = toShopList(res);
+      setShopLists((prev) =>
+        prev.map((l) => (l.id === id ? list : l)),
+      );
+      return list;
+    } catch (e) {
+      console.error("Failed to fetch list", e);
+      return undefined;
+    }
+  }, []);
 
   return (
     <ShopListContext.Provider
       value={{
         shopLists,
+        isLoading,
         addShopList,
         updateShopListTitle,
         addItemToList,
@@ -140,6 +199,7 @@ export const ShopListProvider: React.FC<{ children: React.ReactNode }> = ({
         updateItemQuantity,
         deleteShopList,
         getShopList,
+        fetchShopListById,
       }}
     >
       {children}

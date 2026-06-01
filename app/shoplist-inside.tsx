@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FlatList,
   StyleSheet,
@@ -11,13 +11,16 @@ import {
   ScrollView,
   Animated,
   Modal,
+  ActivityIndicator,
 } from "react-native";
 import { useShopLists } from "./_ShopListContext";
+import { shoplistsApi } from "./_shoplists-api";
 import * as Clipboard from "expo-clipboard";
 
 export default function Index() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id: idStr } = useLocalSearchParams<{ id: string }>();
+  const listId = Number(idStr);
   const {
     getShopList,
     updateShopListTitle,
@@ -26,42 +29,84 @@ export default function Index() {
     toggleItemPurchased,
     updateItemQuantity,
     deleteShopList,
+    fetchShopListById,
   } = useShopLists();
 
-  const shopList = id ? getShopList(id) : undefined;
+  const shopList = idStr ? getShopList(listId) : undefined;
   const title = shopList?.title || "";
-  const searchTitle = title === "Заголовок" ? "Список 1" : title;
   const items = shopList?.items || [];
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showRecommendations, setShowRecommendations] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [recommendations, setRecommendations] = useState<string[] | null>(null);
+  const [purchaseHistory, setPurchaseHistory] = useState<string[]>([]);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const slideAnim = useState(new Animated.Value(-300))[0];
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (items.length > 0) {
-      setShowRecommendations(true);
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      Animated.timing(slideAnim, {
-        toValue: -300,
-        duration: 300,
-        useNativeDriver: true,
-      }).start(() => setShowRecommendations(false));
+    if (listId) {
+      fetchShopListById(listId);
     }
-  }, [items.length]);
+  }, [listId]);
 
-  const handleDeleteList = () => {
-    if (id) {
-      deleteShopList(id);
+  useEffect(() => {
+    if (listId) {
+      if (items.length > 0) {
+        setShowRecommendations(true);
+        setIsMinimized(false);
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+      } else {
+        Animated.timing(slideAnim, {
+          toValue: -300,
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => setShowRecommendations(false));
+      }
+      shoplistsApi.getRecommendations(listId).then(setRecommendations).catch(() => {});
+    }
+  }, [items.length, listId]);
+
+  useEffect(() => {
+    shoplistsApi.getPurchaseHistory(0, 20).then((data) => {
+      setPurchaseHistory(data.map((item) => item.product_name));
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    if (searchQuery.trim().length > 0) {
+      debounceRef.current = setTimeout(async () => {
+        try {
+          const data = await shoplistsApi.getSuggestions(searchQuery.trim());
+          setSuggestions(data ?? []);
+        } catch {
+          setSuggestions([]);
+        }
+      }, 400);
+    } else {
+      setSuggestions([]);
+    }
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [searchQuery]);
+
+  const handleDeleteList = async () => {
+    if (listId) {
+      await deleteShopList(listId);
       router.push("/list-of-shoplists");
     }
   };
@@ -71,20 +116,20 @@ export default function Index() {
   };
 
   const handleCopyLink = async () => {
-    await Clipboard.setStringAsync(`shoplist.app/list/${id}`);
+    await Clipboard.setStringAsync(`shoplist.app/list/${listId}`);
   };
 
   const searchHeaderIconColor = "#8faa4f";
 
-  const handleTitleChange = (newTitle: string) => {
-    if (id) {
-      updateShopListTitle(id, newTitle);
+  const handleTitleChange = async (newTitle: string) => {
+    if (listId) {
+      await updateShopListTitle(listId, newTitle);
     }
   };
 
-  const handleAddItem = (productName: string) => {
-    if (id) {
-      addItemToList(id, productName);
+  const handleAddItem = async (productName: string) => {
+    if (listId) {
+      await addItemToList(listId, productName);
     }
   };
 
@@ -92,9 +137,9 @@ export default function Index() {
     setAddModalVisible(true);
   };
 
-  const handleConfirmAdd = () => {
-    if (id && searchQuery.trim()) {
-      addItemToList(id, searchQuery.trim());
+  const handleConfirmAdd = async () => {
+    if (listId && searchQuery.trim()) {
+      await addItemToList(listId, searchQuery.trim());
       setAddModalVisible(false);
       setSearchQuery("");
     }
@@ -104,28 +149,30 @@ export default function Index() {
     setAddModalVisible(false);
   };
 
-  const handleRemoveItem = (itemId: string) => {
-    if (id) {
-      removeItemFromList(id, itemId);
+  const handleRemoveItem = async (itemId: number) => {
+    if (listId) {
+      await removeItemFromList(listId, itemId);
     }
   };
 
-  const handleTogglePurchased = (itemId: string) => {
-    if (id) {
-      toggleItemPurchased(id, itemId);
+  const handleTogglePurchased = async (itemId: number) => {
+    if (listId) {
+      await toggleItemPurchased(listId, itemId);
     }
   };
 
-  const handleQuantityChange = (itemId: string, delta: number) => {
-    if (id) {
+  const handleQuantityChange = async (itemId: number, delta: number) => {
+    if (listId) {
       const item = items.find((i) => i.id === itemId);
       if (item) {
-        updateItemQuantity(id, itemId, item.quantity + delta);
+        await updateItemQuantity(listId, itemId, item.quantity + delta);
       }
     }
   };
 
   if (isSearching) {
+    const displaySuggestions = searchQuery.trim().length > 0 ? suggestions : purchaseHistory;
+
     return (
       <View style={styles.container}>
         <View style={styles.searchHeader}>
@@ -143,7 +190,6 @@ export default function Index() {
             />
           </TouchableOpacity>
         </View>
-        <Text style={styles.searchTitle}>{searchTitle}</Text>
 
         <View style={styles.searchContainer}>
           <View style={styles.searchBar}>
@@ -163,28 +209,27 @@ export default function Index() {
             )}
           </View>
 
-          {searchQuery.length > 0 ? (
-            <View style={styles.searchResultsList}>
-              <Text style={styles.searchEmptyText}>Ничего не найдено</Text>
-              <TouchableOpacity style={styles.addItemButton} onPress={handleOpenAddModal}>
-                <Text style={styles.addItemButtonText}>Добавить товар</Text>
-              </TouchableOpacity>
-            </View>
+          {displaySuggestions.length > 0 ? (
+            <FlatList
+              data={displaySuggestions}
+              keyExtractor={(item, idx) => String(idx)}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.historyItem}
+                  onPress={() => handleAddItem(item)}
+                >
+                  <Ionicons name="time-outline" size={20} color="#fff" />
+                  <Text style={styles.historyItemText}>{item}</Text>
+                </TouchableOpacity>
+              )}
+              style={styles.searchResultsList}
+            />
           ) : (
             <View style={styles.searchResultsList}>
-              {items.length === 0 ? (
-                <Text style={styles.searchEmptyText}>Введите название товара</Text>
-              ) : (
-                items.map((item) => (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={styles.historyItem}
-                    onPress={() => handleAddItem(item.name)}
-                  >
-                    <Ionicons name="time-outline" size={20} color="#fff" />
-                    <Text style={styles.historyItemText}>{item.name}</Text>
-                  </TouchableOpacity>
-                ))
+              {searchQuery.trim().length > 0 && (
+                <TouchableOpacity style={styles.addItemButton} onPress={handleOpenAddModal}>
+                  <Text style={styles.addItemButtonText}>Добавить товар</Text>
+                </TouchableOpacity>
               )}
             </View>
           )}
@@ -272,17 +317,17 @@ export default function Index() {
 
       <FlatList
         data={items}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => (
           <View style={styles.itemContainer}>
             <TouchableOpacity
               style={[
                 styles.checkCircle,
-                item.purchased && styles.checkCircleChecked,
+                item.isCompleted && styles.checkCircleChecked,
               ]}
               onPress={() => handleTogglePurchased(item.id)}
             >
-              {item.purchased && (
+              {item.isCompleted && (
                 <Ionicons name="checkmark" size={16} color="#fff" />
               )}
             </TouchableOpacity>
@@ -290,7 +335,7 @@ export default function Index() {
             <Text
               style={[
                 styles.itemText,
-                item.purchased && styles.itemTextPurchased,
+                item.isCompleted && styles.itemTextPurchased,
               ]}
             >
               {item.name}
@@ -320,17 +365,55 @@ export default function Index() {
         ListEmptyComponent={
           <Text style={styles.emptyText}>Список покупок пуст</Text>
         }
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          showRecommendations && { paddingBottom: 220 },
+        ]}
       />
 
       {showRecommendations && (
         <Animated.View
           style={[
-            styles.recommendationsContainer,
+            styles.recsOuter,
             { transform: [{ translateX: slideAnim }] },
           ]}
         >
-          <Text style={styles.recommendationsTitle}>Рекомендации</Text>
+          <View style={styles.recsContent}>
+            <Text style={styles.recsTitle}>Рекомендации</Text>
+            {recommendations === null ? (
+              <Text style={styles.recsText}>Загрузка...</Text>
+            ) : recommendations.length > 0 ? (
+              recommendations.map((rec: string, idx: number) => (
+                <TouchableOpacity
+                  key={idx}
+                  style={styles.recsItem}
+                  onPress={() => handleAddItem(rec)}
+                >
+                  <Text style={styles.recsText}>{rec}</Text>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <Text style={styles.recsText}>Нет рекомендаций</Text>
+            )}
+          </View>
+          <TouchableOpacity
+            style={styles.recsHandle}
+            onPress={() => {
+              const newMinimized = !isMinimized;
+              setIsMinimized(newMinimized);
+              Animated.timing(slideAnim, {
+                toValue: newMinimized ? -200 : 0,
+                duration: 250,
+                useNativeDriver: true,
+              }).start();
+            }}
+          >
+            <Ionicons
+              name={isMinimized ? "chevron-forward" : "chevron-back"}
+              size={20}
+              color="#4a6530"
+            />
+          </TouchableOpacity>
         </Animated.View>
       )}
 
@@ -349,7 +432,7 @@ export default function Index() {
               <View style={styles.shareAppIcon}>
                 <Ionicons name="basket-outline" size={25} color="#fff" />
               </View>
-              <Text style={styles.shareLink}>shoplist.app/list/{id}</Text>
+              <Text style={styles.shareLink}>shoplist.app/list/{listId}</Text>
               <TouchableOpacity onPress={() => setShowShareModal(false)}>
                 <Ionicons name="close" size={24} color="#666" />
               </TouchableOpacity>
@@ -550,6 +633,7 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   },
   searchResultsList: {
+    flex: 1,
     backgroundColor: "#8faa4f",
     borderRadius: 20,
     padding: 5,
@@ -755,29 +839,51 @@ const styles = StyleSheet.create({
     minWidth: 20,
     textAlign: "center",
   },
-  recommendationsContainer: {
+  recsOuter: {
     position: "absolute",
     left: 0,
-    bottom: 40,
-    backgroundColor: "#fff",
-    borderWidth: 2,
-    borderColor: "#4a6530",
-    borderLeftWidth: 0,
-    borderTopRightRadius: 12,
-    borderBottomRightRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    minWidth: 200,
+    bottom: 60,
+    flexDirection: "row",
     shadowColor: "#000",
     shadowOffset: { width: 2, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 5,
   },
-  recommendationsTitle: {
-    fontSize: 14,
+  recsContent: {
+    width: 200,
+    backgroundColor: "#fff",
+    borderWidth: 2,
+    borderColor: "#4a6530",
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 0,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  recsHandle: {
+    width: 32,
+    backgroundColor: "#fff",
+    borderWidth: 2,
+    borderColor: "#4a6530",
+    borderLeftWidth: 0,
+    borderTopRightRadius: 12,
+    borderBottomRightRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  recsTitle: {
+    fontSize: 15,
     fontWeight: "bold",
     color: "#4a6530",
-    marginBottom: 8,
+  },
+  recsItem: {
+    paddingVertical: 2,
+  },
+  recsText: {
+    fontSize: 14,
+    color: "#4a6530",
+    marginBottom: 2,
   },
 });
