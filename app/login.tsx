@@ -9,6 +9,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const router = useRouter();
   const { login } = useUser();
 
@@ -17,14 +18,15 @@ export default function Login() {
       Alert.alert("Ошибка", "Заполните все поля");
       return;
     }
+    setError("");
     setLoading(true);
     try {
       await login(username.trim(), password);
       router.replace("/list-of-shoplists");
     } catch (e: any) {
       console.error("[LOGIN ERROR]", e.response?.status, JSON.stringify(e.response?.data), e.message);
-      const message = e.response?.data?.detail || "Ошибка входа";
-      Alert.alert("Ошибка", message);
+      const message = e.response?.data?.detail || "Неверный логин или пароль";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -46,6 +48,17 @@ export default function Login() {
     >
       <View style={styles.container}>
         <Text style={styles.title}>Логин</Text>
+
+        <View style={[styles.errorContainer, !error && styles.errorContainerHidden]}>
+          {error ? (
+            <>
+              <TouchableOpacity style={styles.errorCloseButton} onPress={() => setError("")}>
+                <Ionicons name="close" size={16} color="#fff" />
+              </TouchableOpacity>
+              <Text style={styles.errorText}>{error}</Text>
+            </>
+          ) : null}
+        </View>
         
         <View style={styles.usernameInputContainer}>
           <TextInput
@@ -87,7 +100,7 @@ export default function Login() {
         <TouchableOpacity onPress={handleRegistration}>
           <Text style={styles.linkRegistration}>Регистрация</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
           {loading ? (
             <ActivityIndicator size="large" color="#fff" />
@@ -115,7 +128,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 50,
-    marginBottom: 40,
+    marginBottom: 10,
     alignSelf: "flex-start",
     marginLeft: 20,
     color: "#5a7a3a",
@@ -180,7 +193,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   linkForgot: {
-    color: "#c5d3a8",
+    color: "#5a7a3a",
     fontSize: 14,               
     marginBottom: 15,            
     alignSelf: "flex-end",      
@@ -215,5 +228,34 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     marginTop: -5,
+  },
+  errorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 5,
+    width: "100%",
+    gap: 8,
+    minHeight: 40,
+  },
+  errorContainerHidden: {
+    opacity: 0,
+  },
+  errorCloseButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#ff4444",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    color: "#ff4444",
+    fontSize: 14,
+    fontWeight: "600",
+    flexShrink: 1,
+    textAlign: "center",
   },
 });

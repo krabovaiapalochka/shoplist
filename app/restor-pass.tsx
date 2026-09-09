@@ -1,13 +1,69 @@
-import { useState } from "react";
-import { Text, View, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from "react-native";
+import { useState, useRef, useEffect } from "react";
+import { Text, View, TextInput, TouchableOpacity, StyleSheet, ImageBackground, ActivityIndicator, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { authApi } from "./_auth";
+
+const RESEND_SECONDS = 60;
 
 export default function RestorPass() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [showCode, setShowCode] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  const startResendTimer = () => {
+    setSecondsLeft(RESEND_SECONDS);
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleSendCode = async () => {
+    if (!email.trim()) {
+      Alert.alert("Ошибка", "Введите почту");
+      return;
+    }
+    setSending(true);
+    try {
+      await authApi.requestPasswordReset(email.trim());
+      startResendTimer();
+      Alert.alert("Готово", "Код для восстановления отправлен на вашу почту");
+    } catch (e: any) {
+      const message = e.response?.data?.detail || "Не удалось отправить код. Проверьте почту и соединение";
+      Alert.alert("Ошибка", message);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleContinue = () => {
+    if (!email.trim()) {
+      Alert.alert("Ошибка", "Введите почту");
+      return;
+    }
+    if (!code.trim()) {
+      Alert.alert("Ошибка", "Введите код из письма");
+      return;
+    }
+    router.push({ pathname: "/new-pass", params: { token: code.trim(), email: email.trim() } });
+  };
 
   return (
     <ImageBackground 
@@ -54,14 +110,24 @@ export default function RestorPass() {
             />
           </TouchableOpacity>
         </View>
-        
+
+        <TouchableOpacity
+          style={styles.resendButton}
+          onPress={handleSendCode}
+          disabled={sending || secondsLeft > 0}
+        >
+          {sending ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.resendButtonText}>
+              {secondsLeft > 0 ? `Отправить снова через ${secondsLeft} сек` : "Отправить код"}
+            </Text>
+          )}
+        </TouchableOpacity>
+
         <TouchableOpacity 
           style={styles.button}
-          onPress={() => {
-            console.log("Email:", email);
-            console.log("Code:", code);
-            router.push("/new-pass");
-          }}
+          onPress={handleContinue}
         >
           <Text style={styles.buttonText}>→</Text>
         </TouchableOpacity>
@@ -187,5 +253,19 @@ const styles = StyleSheet.create({
   backButtonText: {
     fontSize: 30,
     color: "#a4b05d",
+  },
+  resendButton: {
+    marginTop: 8,
+    alignSelf: "flex-start",
+    marginLeft: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  resendButtonText: {
+    fontSize: 15,
+    color: "#5a7a3a",
+    fontWeight: "500",
   },
 });

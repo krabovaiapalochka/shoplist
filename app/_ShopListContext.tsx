@@ -54,10 +54,15 @@ interface ShopListContextType {
   isLoading: boolean;
   addShopList: (title: string, description?: string | null) => Promise<number>;
   updateShopListTitle: (id: number, title: string) => Promise<void>;
-  addItemToList: (listId: number, itemName: string) => Promise<void>;
+  addItemToList: (listId: number, itemName: string, quantity?: number, unit?: string) => Promise<void>;
   removeItemFromList: (listId: number, itemId: number) => Promise<void>;
   toggleItemPurchased: (listId: number, itemId: number) => Promise<void>;
   updateItemQuantity: (listId: number, itemId: number, quantity: number) => Promise<void>;
+  updateItemDetails: (
+    listId: number,
+    itemId: number,
+    updates: { name?: string; quantity?: number; unit?: string },
+  ) => Promise<void>;
   deleteShopList: (id: number) => Promise<void>;
   getShopList: (id: number) => ShopList | undefined;
   fetchShopListById: (id: number) => Promise<ShopList | undefined>;
@@ -106,16 +111,6 @@ export const ShopListProvider: React.FC<{ children: React.ReactNode }> = ({
   const deleteShopList = useCallback(async (id: number) => {
     await shoplistsApi.delete(id);
     setShopLists((prev) => prev.filter((list) => list.id !== id));
-  }, []);
-
-  const addItemToList = useCallback(async (listId: number, itemName: string) => {
-    const res = await shoplistsApi.addItem(listId, { name: itemName, quantity: 1 });
-    const item = toItem(res);
-    setShopLists((prev) =>
-      prev.map((list) =>
-        list.id === listId ? { ...list, items: [...list.items, item] } : list,
-      ),
-    );
   }, []);
 
   const removeItemFromList = useCallback(async (listId: number, itemId: number) => {
@@ -172,6 +167,81 @@ export const ShopListProvider: React.FC<{ children: React.ReactNode }> = ({
     );
   }, []);
 
+  const addItemToList = useCallback(
+    async (listId: number, itemName: string, quantity = 1, unit = "шт") => {
+      const list = shopLists.find((l) => l.id === listId);
+      const existing = list?.items.find(
+        (i) => i.name.toLowerCase() === itemName.toLowerCase(),
+      );
+
+      if (existing) {
+        const validQuantity = Math.min(20, Math.max(1, existing.quantity + quantity));
+        const updates: { quantity: number; unit?: string } = { quantity: validQuantity };
+        if (unit !== "шт") updates.unit = unit;
+        await shoplistsApi.updateItem(existing.id, updates);
+        setShopLists((prev) =>
+          prev.map((l) =>
+            l.id === listId
+              ? {
+                  ...l,
+                  items: l.items.map((i) =>
+                    i.id === existing.id ? { ...i, ...updates } : i,
+                  ),
+                }
+              : l,
+          ),
+        );
+      } else {
+        const res = await shoplistsApi.addItem(listId, {
+          name: itemName,
+          quantity,
+          unit,
+        });
+        const item = toItem(res);
+        setShopLists((prev) =>
+          prev.map((list) =>
+            list.id === listId ? { ...list, items: [...list.items, item] } : list,
+          ),
+        );
+      }
+    },
+    [shopLists],
+  );
+
+  const updateItemDetails = useCallback(
+    async (
+      listId: number,
+      itemId: number,
+      updates: { name?: string; quantity?: number; unit?: string },
+    ) => {
+      await shoplistsApi.updateItem(itemId, {
+        name: updates.name,
+        quantity: updates.quantity,
+        unit: updates.unit,
+      });
+      setShopLists((prev) =>
+        prev.map((list) =>
+          list.id === listId
+            ? {
+                ...list,
+                items: list.items.map((i) =>
+                  i.id === itemId
+                    ? {
+                        ...i,
+                        ...(updates.name !== undefined ? { name: updates.name } : {}),
+                        ...(updates.quantity !== undefined ? { quantity: updates.quantity } : {}),
+                        ...(updates.unit !== undefined ? { unit: updates.unit } : {}),
+                      }
+                    : i,
+                ),
+              }
+            : list,
+        ),
+      );
+    },
+    [],
+  );
+
   const fetchShopListById = useCallback(async (id: number) => {
     try {
       const res = await shoplistsApi.getById(id);
@@ -197,6 +267,7 @@ export const ShopListProvider: React.FC<{ children: React.ReactNode }> = ({
         removeItemFromList,
         toggleItemPurchased,
         updateItemQuantity,
+        updateItemDetails,
         deleteShopList,
         getShopList,
         fetchShopListById,

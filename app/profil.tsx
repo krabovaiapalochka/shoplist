@@ -31,6 +31,7 @@ export default function ProfileScreen() {
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -127,6 +128,11 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = async () => {
+    setLogoutModalVisible(true);
+  };
+
+  const confirmLogout = async () => {
+    setLogoutModalVisible(false);
     await logout();
     router.replace("/login");
   };
@@ -326,6 +332,37 @@ export default function ProfileScreen() {
                   onPress={() => setDeleteModalVisible(false)}
                 >
                   <Text style={styles.deleteModalCancelButtonText}>Отмена</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+
+        <Modal
+          visible={logoutModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setLogoutModalVisible(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setLogoutModalVisible(false)}
+          >
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Вы точно хотите выйти из аккаунта?</Text>
+              <View style={styles.deleteButtonsRow}>
+                <TouchableOpacity
+                  style={styles.deleteModalButton}
+                  onPress={confirmLogout}
+                >
+                  <Text style={styles.deleteModalButtonText}>Да</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.deleteModalCancelButton}
+                  onPress={() => setLogoutModalVisible(false)}
+                >
+                  <Text style={styles.deleteModalCancelButtonText}>Нет</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -534,6 +571,7 @@ const styles = StyleSheet.create({
     color: "#4a6530",
     marginBottom: 15,
     fontWeight: "600",
+    textAlign: "center",
   },
   modalSubtitle: {
     fontSize: 14,

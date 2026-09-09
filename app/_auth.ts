@@ -71,10 +71,28 @@ export const authApi = {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: formData,
     });
-    if (!res.ok) throw new Error("Upload failed");
+    if (!res.ok) {
+      let detail = "Upload failed";
+      try {
+        const body = await res.json();
+        detail = body.detail || detail;
+      } catch {}
+      throw new Error(detail);
+    }
   },
 
   async deleteAvatar(): Promise<void> {
     await apiClient.delete("/users/me/avatar");
+  },
+
+  async requestPasswordReset(email: string): Promise<void> {
+    await apiClient.post("/auth/request-reset", { email });
+  },
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    await apiClient.post("/auth/reset-password", {
+      token,
+      new_password: newPassword,
+    });
   },
 };

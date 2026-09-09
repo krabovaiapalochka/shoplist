@@ -1,14 +1,43 @@
 import { useState } from "react";
-import { Text, View, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from "react-native";
-import { useRouter } from "expo-router";
+import { Text, View, TextInput, TouchableOpacity, StyleSheet, ImageBackground, ActivityIndicator, Alert } from "react-native";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { authApi } from "./_auth";
 
 export default function NewPassword() {
+  const { token } = useLocalSearchParams<{ token?: string }>();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  const handleSubmit = async () => {
+    if (!token) {
+      Alert.alert("Ошибка", "Сначала запросите код восстановления");
+      return;
+    }
+    if (!password) {
+      Alert.alert("Ошибка", "Введите новый пароль");
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert("Ошибка", "Пароли не совпадают!");
+      return;
+    }
+    setLoading(true);
+    try {
+      await authApi.resetPassword(token, password);
+      Alert.alert("Готово", "Пароль успешно изменен", [
+        { text: "OK", onPress: () => router.replace("/login") },
+      ]);
+    } catch (e: any) {
+      const message = e.response?.data?.detail || "Не удалось изменить пароль. Попробуйте ещё раз";
+      Alert.alert("Ошибка", message);
+      setLoading(false);
+    }
+  };
 
   return (
     <ImageBackground 
@@ -65,20 +94,14 @@ export default function NewPassword() {
         
         <TouchableOpacity 
           style={styles.button}
-          onPress={() => {
-            console.log("Password:", password);
-            console.log("Confirm Password:", confirmPassword);
-            
-            if (password !== confirmPassword) {
-              alert("Пароли не совпадают!");
-              return;
-            }
-            
-            console.log("Пароли совпадают, отправляем...");
-            router.push("/login");
-          }}
+          onPress={handleSubmit}
+          disabled={loading}
         >
-          <Text style={styles.buttonText}>→</Text>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>→</Text>
+          )}
         </TouchableOpacity>
       </View>
     </ImageBackground>

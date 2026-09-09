@@ -67,21 +67,21 @@ const App = () => {
   const getFilteredLists = () => {
     if (!searchText.trim()) return shopLists;
     const search = searchText.toLowerCase();
-    return [...shopLists].sort((a, b) => {
-      const titleA = (
-        a.title === "Заголовок" ? `Список ${shopLists.indexOf(a) + 1}` : a.title
-      ).toLowerCase();
-      const titleB = (
-        b.title === "Заголовок" ? `Список ${shopLists.indexOf(b) + 1}` : b.title
-      ).toLowerCase();
-      const exactA = titleA === search;
-      const exactB = titleB === search;
-      if (exactA && !exactB) return -1;
-      if (!exactA && exactB) return 1;
-      if (titleA.startsWith(search) && !titleB.startsWith(search)) return -1;
-      if (!titleA.startsWith(search) && titleB.startsWith(search)) return 1;
-      return titleA.indexOf(search) - titleB.indexOf(search);
-    });
+    const titleOf = (a: ShopList) =>
+      (a.title === "Заголовок" ? `Список ${shopLists.indexOf(a) + 1}` : a.title).toLowerCase();
+    return [...shopLists]
+      .filter((a) => titleOf(a).includes(search))
+      .sort((a, b) => {
+        const titleA = titleOf(a);
+        const titleB = titleOf(b);
+        const exactA = titleA === search;
+        const exactB = titleB === search;
+        if (exactA && !exactB) return -1;
+        if (!exactA && exactB) return 1;
+        if (titleA.startsWith(search) && !titleB.startsWith(search)) return -1;
+        if (!titleA.startsWith(search) && titleB.startsWith(search)) return 1;
+        return titleA.indexOf(search) - titleB.indexOf(search);
+      });
   };
 
   const filteredLists = getFilteredLists();
@@ -159,6 +159,10 @@ const App = () => {
           </View>
 
           <Text style={styles.sectionTitle}>Списки покупок</Text>
+
+          {searchText.trim() && filteredLists.length === 0 ? (
+            <Text style={styles.notFoundText}>Списка с таким названием не найдено</Text>
+          ) : null}
 
           <View style={styles.masonryContainer}>
             <View style={styles.masonryColumn}>
@@ -380,6 +384,12 @@ const styles = StyleSheet.create({
     color: "#4a6530",
     marginBottom: 15,
     fontWeight: "500",
+  },
+  notFoundText: {
+    fontSize: 16,
+    color: "#5a7a3a",
+    textAlign: "center",
+    marginTop: 40,
   },
   masonryContainer: {
     flexDirection: "row",

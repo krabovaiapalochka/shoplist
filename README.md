@@ -33,8 +33,9 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 6. запуск проекта(с бэка)
 
    ```bash
+   cd backend
    docker compose up -d
-   uv run.py
+   uv run run.py
    ```
 
 In the output, you'll find options to open the app in a
